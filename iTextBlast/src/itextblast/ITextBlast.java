@@ -18,6 +18,8 @@ import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.itextpdf.text.pdf.parser.SimpleTextExtractionStrategy;
 import java.io.FileNotFoundException;
 import static java.lang.System.out;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,24 +32,36 @@ public class ITextBlast {
     /**
      * Format of the resulting PDF files.
      */
-    public static final String RESULT
-            = "./results/soalan-%s.pdf";
+    public static final String RESULT = "./results/soalan-%s.pdf";
+    public static final String SOURCE = "./source/%s.pdf";
     private static PdfReader my_reader;
+    private static String qa_filename;
 
     /**
      * Main method.
      *
      * @param args no arguments needed
-     * @throws DocumentException
-     * @throws IOException
      */
-    public static void main(String[] args) throws IOException, DocumentException {
+    public static void main(String[] args) {
+        try {
+            // Extract filemame from CLI
+            // otherwise use below as default ..
+            ITextBlast.qa_filename = "imokman";
+            // TODO: as preparation; make sure the inout file actually exists first!!
+            // TODO: as preparation; create the resulting output folder?? if does not exist already
+            ITextBlast.processQAFile(ITextBlast.qa_filename);
+        } catch (IOException | DocumentException ex) {
+            Logger.getLogger(ITextBlast.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private static void processQAFile(String qa_filename) throws IOException, DocumentException {
 
         // use one of the previous examples to create a PDF
         // new MovieTemplates().createPdf(MovieTemplates.RESULT);
         // Create a reader; from current existing file
         // Next time pass it from args ..
-        PdfReader reader = new PdfReader("./source/imokman.pdf");
+        PdfReader reader = new PdfReader(String.format(SOURCE, qa_filename));
         ITextBlast.my_reader = reader;
         // We'll create as many new PDFs as there are pages
         // Document document;
@@ -60,10 +74,28 @@ public class ITextBlast {
         // LocationTextExtractionStrategy strategy = new LocationTextExtractionStrategy();
         // SimpleTextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
         // Both ^ does not work well; weird behavior ... no need so clever ..
-        Pattern pattern;
+        // START SMART Start Number ********
+        Pattern smart_start_pattern;
+        smart_start_pattern = Pattern.compile(".*SOALAN.*?N.*O.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
+        // Extract cover page number as smartly as possible??
+        String cover_page_content = PdfTextExtractor.getTextFromPage(reader, 1);
+        Matcher smart_start_matcher = smart_start_pattern.matcher(cover_page_content);
+        String smart_start_question_number = null;
+        if (smart_start_matcher.find()) {
+            // Extract the question number based on backreference
+            smart_start_question_number = smart_start_matcher.group(1);
+            // How will it look when using a different strategy?
+            out.println("Matched " + smart_start_matcher.group(0) + " and SMART Start Number: " + smart_start_question_number);
+        }
+        // END SMART Start Number ********
+        Pattern liberal_found_question_pattern_uno;
+        liberal_found_question_pattern_uno = Pattern.compile(".*N.*O.*SOALAN.*", Pattern.CASE_INSENSITIVE);
+        Pattern liberal_found_question_pattern_dos = Pattern.compile(".*SOALAN.*N.*O.*", Pattern.CASE_INSENSITIVE);
+        Pattern pattern_uno;
         // pattern = Pattern.compile("^.*NO.*SOALAN.*?(\\d+).*$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
         // pattern = Pattern.compile(".*SOALAN.*?(\\d+).*", Pattern.CASE_INSENSITIVE);
-        pattern = Pattern.compile(".*NO.*SOALAN.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
+        pattern_uno = Pattern.compile(".*N.*O.*SOALAN.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
+        Pattern pattern_dos = Pattern.compile(".*SOALAN.*N.*O.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
         // OPTION 2 is to try with the next available number between word boundaries .. but may then need non-greedy ..
         // Init start and end page
         int start_page = 1;
@@ -72,6 +104,7 @@ public class ITextBlast {
         for (int i = 1; i < n; i++) {
             // init found_question_number
             String found_question_number = null;
+            boolean found_match = false;
             // PdfDictionary page = reader.getPageN(i);
             // use location based strategy
             out.println("Page " + i);
@@ -80,14 +113,34 @@ public class ITextBlast {
             String content = PdfTextExtractor.getTextFromPage(reader, i);
             // DEBUG: Uncomment below ..
             // out.println(content);
-            Matcher matcher = pattern.matcher(content);
-            boolean found_match = false;
-            while (matcher.find()) {
+            Matcher liberal_uno_matcher = liberal_found_question_pattern_uno.matcher(content);
+            if (liberal_uno_matcher.find()) {   
+                out.println("Matched UNO!");
                 found_match = true;
-                // Extract the question number based on backreference
-                found_question_number = matcher.group(1);
-                // How will it look when using a different strategy?
-                out.println("Matched " + matcher.group(0) + " and Question Number: " + found_question_number);
+                Matcher matcher = pattern_uno.matcher(content);
+                // Loop to find the digit; it is possible it is not found an dleft as null ..
+                while (matcher.find()) {
+                    // Extract the question number based on backreference
+                    found_question_number = matcher.group(1);
+                    // How will it look when using a different strategy?
+                    out.println("Matched " + matcher.group(0) + " and Question Number: " + found_question_number);
+                }
+            } else if (liberal_found_question_pattern_dos.matcher(content).find()) {
+                if ("0-intro".equals(question_number)) {
+                    out.println("SMART!!!");
+                } else {
+                    found_match = true;
+                    out.println("Matched DOS!");
+                    Matcher matcher = pattern_dos.matcher(content);
+                    // Loop to find the digit; it is possible it is not found an dleft as null ..
+                    while (matcher.find()) {
+                        // Extract the question number based on backreference
+                        found_question_number = matcher.group(1);
+                        // How will it look when using a different strategy?
+                        out.println("Matched " + matcher.group(0) + " and Question Number: " + found_question_number);
+                    }
+
+                }
             }
             // If matched; take out the last start, end 
             if (found_match) {
@@ -95,6 +148,17 @@ public class ITextBlast {
                 end_page = i - 1;
                 if (end_page < 1) {
                     end_page = 1;
+                }
+                if (null == found_question_number) {
+                    if ("0-intro".equals(question_number)) {
+                        // After intro; if got problem; try the smart start
+                        found_question_number = smart_start_question_number;
+                        out.println("First question could not determine number; using Q No. => " + found_question_number);
+                    } else {
+                        // otherwise; use current question and just append Unix timestamp ..
+                        found_question_number = question_number + "_" + (System.currentTimeMillis() / 1000L);
+                        out.println("Unexpectedly could not determine number; using Q No. => " + found_question_number);
+                    }
                 }
                 // Write based on previous confirmed question_number
                 ITextBlast.copySelectedQuestionPage(start_page, end_page, question_number);
