@@ -32,8 +32,9 @@ public class ITextBlast {
     /**
      * Format of the resulting PDF files.
      */
-    public static final String RESULT = "./results/soalan-%s.pdf";
+    public static final String RESULT = "./results/%s/soalan-%s.pdf";
     public static final String SOURCE = "./source/%s.pdf";
+    private static String working_dir = "";
     private static PdfReader my_reader;
     private static String qa_filename;
 
@@ -44,9 +45,15 @@ public class ITextBlast {
      */
     public static void main(String[] args) {
         try {
-            // Extract filemame from CLI
-            // otherwise use below as default ..
-            ITextBlast.qa_filename = "imokman";
+            if (args.length > 0) {
+                ITextBlast.working_dir = args[0];
+                ITextBlast.qa_filename = args[1];
+            } else {
+                // Extract filemame from CLI
+                // otherwise use below as default ..
+                ITextBlast.qa_filename = "imokman";
+            }
+            out.println("PROCESSING " + ITextBlast.qa_filename + " in " + ITextBlast.working_dir);
             // TODO: as preparation; make sure the inout file actually exists first!!
             // TODO: as preparation; create the resulting output folder?? if does not exist already
             ITextBlast.processQAFile(ITextBlast.qa_filename);
@@ -61,7 +68,7 @@ public class ITextBlast {
         // new MovieTemplates().createPdf(MovieTemplates.RESULT);
         // Create a reader; from current existing file
         // Next time pass it from args ..
-        PdfReader reader = new PdfReader(String.format(SOURCE, qa_filename));
+        PdfReader reader = new PdfReader(String.format(ITextBlast.working_dir + SOURCE, qa_filename));
         ITextBlast.my_reader = reader;
         // We'll create as many new PDFs as there are pages
         // Document document;
@@ -69,14 +76,14 @@ public class ITextBlast {
         // loop over all the pages in the original PDF
         int n = reader.getNumberOfPages();
         // For test of extraction and regexp; use first 5 pages ..
-        n = 15;
+        // n = 15;
         // Text Extraction Strategy here ...
         // LocationTextExtractionStrategy strategy = new LocationTextExtractionStrategy();
         // SimpleTextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
         // Both ^ does not work well; weird behavior ... no need so clever ..
         // START SMART Start Number ********
         Pattern smart_start_pattern;
-        smart_start_pattern = Pattern.compile(".*SOALAN.*?N.*O.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
+        smart_start_pattern = Pattern.compile(".*?SOALAN.*?N.*?O.*?(\\d+)\\b+.*", Pattern.CASE_INSENSITIVE);
         // Extract cover page number as smartly as possible??
         String cover_page_content = PdfTextExtractor.getTextFromPage(reader, 1);
         Matcher smart_start_matcher = smart_start_pattern.matcher(cover_page_content);
@@ -114,7 +121,7 @@ public class ITextBlast {
             // DEBUG: Uncomment below ..
             // out.println(content);
             Matcher liberal_uno_matcher = liberal_found_question_pattern_uno.matcher(content);
-            if (liberal_uno_matcher.find()) {   
+            if (liberal_uno_matcher.find()) {
                 out.println("Matched UNO!");
                 found_match = true;
                 Matcher matcher = pattern_uno.matcher(content);
@@ -154,10 +161,16 @@ public class ITextBlast {
                         // After intro; if got problem; try the smart start
                         found_question_number = smart_start_question_number;
                         out.println("First question could not determine number; using Q No. => " + found_question_number);
+                        // Print out content to debug
+                        out.println("*****DEBUG Content*******");
+                        out.println(content);
                     } else {
                         // otherwise; use current question and just append Unix timestamp ..
                         found_question_number = question_number + "_" + (System.currentTimeMillis() / 1000L);
                         out.println("Unexpectedly could not determine number; using Q No. => " + found_question_number);
+                        // Print out content to debug
+                        out.println("*****DEBUG Content*******");
+                        out.println(content);
                     }
                 }
                 // Write based on previous confirmed question_number
@@ -229,7 +242,7 @@ public class ITextBlast {
         PdfCopy copy;
         document = new Document();
         copy = new PdfCopy(document,
-                new FileOutputStream(String.format(RESULT, question_number)));
+                new FileOutputStream(String.format(ITextBlast.working_dir + RESULT, ITextBlast.qa_filename, question_number)));
         document.open();
         for (int i = start_page; i <= end_page; i++) {
             copy.addPage(copy.getImportedPage(ITextBlast.my_reader, i));
