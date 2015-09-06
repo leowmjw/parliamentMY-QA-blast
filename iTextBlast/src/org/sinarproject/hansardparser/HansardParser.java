@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 // iTextPDF libs ..
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
+import itextblast.ITextBlast;
 import java.io.FileNotFoundException;
 
 /**
@@ -30,18 +31,18 @@ public class HansardParser {
      * The resulting PDF file.
      */
     public static String SOURCE
-           // = "example/DR-PARLIMEN/DR-18062015.PDF";
-            = "example/DR-PARLIMEN/2015/DR-17062015.PDF";  
+            // = "example/DR-PARLIMEN/DR-18062015.PDF";
+            = "example/DR-PARLIMEN/2015/DR-17062015.PDF";
             // = "example/DR-PARLIMEN/2015/DR-18062015.PDF";  
-           // = "example/DR-PARLIMEN/2015/DR-24062013.pdf";
+    // = "example/DR-PARLIMEN/2015/DR-24062013.pdf";
     // PdfReader for multiple uses?
     // The two items below should NOT be static; danger to race /override conditions likely .. :P
     static PdfReader my_reader;
+    static String hansard_filename;
     private static int my_error_count;
 
     /**
      * @param args the command line arguments
-     * @throws java.io.IOException
      */
     public static void main(String[] args) {
         // TODO code application logic here
@@ -54,9 +55,29 @@ public class HansardParser {
         }
         // Assign it for later reuse ..
         HansardParser.my_reader = reader;
+        HansardParser.processHansardStructure();
+    }
+
+    public static void processHansardFile(String hansard_filename) {
+        out.println("Inside the function processHansardFile!!");
+        out.println("PROCESSING " + hansard_filename + " in " + ITextBlast.working_dir);
+        // Fill up the reader link
+        PdfReader reader = null;
+        try {
+            reader = new PdfReader(String.format(ITextBlast.working_dir + ITextBlast.SOURCE, hansard_filename));
+        } catch (IOException ex) {
+            Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        // Assign it for later reuse ..
+        HansardParser.my_reader = reader;
+        HansardParser.hansard_filename = hansard_filename;
+        HansardParser.processHansardStructure();
+    }
+
+    private static void processHansardStructure() {
         // Below gets the Topics associated with each page ..
         Map<Integer, List<String>> myHalamanHash;
-        myHalamanHash = HansardParser.getHalaman(reader);
+        myHalamanHash = HansardParser.getHalaman(HansardParser.my_reader);
         // Below gets the start page and end page mappings
         Map<Integer, Integer> myHalamanStartEnd;
         myHalamanStartEnd = HansardParser.splitHalamanbyTopic(myHalamanHash);
@@ -73,12 +94,10 @@ public class HansardParser {
             HansardCopy.copyHalamanFrontPage();
             // OPTIONAL: Identify the playas
             // HansardParser.identifySpeakersinTopic(myHalamanStartEnd, myHalamanHash);
-        } catch (DocumentException ex) {
-            Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (DocumentException | IOException ex) {
             Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
         }
-         
+
     }
 
     private static void prepareSpeechBlock(String final_marked_content) {
@@ -120,10 +139,10 @@ public class HansardParser {
             }
             // DEBUG: Below for debugging purposes ..
             /*
-            out.println("SPEECH_BLOCK");
-            out.println("Speaker " + final_speaker + " says ---> " + final_message);
-            out.println("=============================");
-            */
+             out.println("SPEECH_BLOCK");
+             out.println("Speaker " + final_speaker + " says ---> " + final_message);
+             out.println("=============================");
+             */
             // Split out speaker from what was said; look for the : pattern
             // Maybe even detect time marker??
             // Special case; from previous page; append the previous guy ..

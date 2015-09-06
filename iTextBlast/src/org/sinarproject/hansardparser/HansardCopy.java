@@ -11,9 +11,10 @@ import java.util.List;
 import java.util.Map;
 // iTextPDF libs ..
 import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfImportedPage;
+import itextblast.ITextBlast;
+import static itextblast.ITextBlast.RESULT;
 import java.io.FileOutputStream;
 import static java.lang.System.out;
 
@@ -22,6 +23,9 @@ import static java.lang.System.out;
  * @author leow
  */
 public class HansardCopy {
+
+    public static final String RESULT_MAYBE = "./results/%s/hansard-%s-unsure.pdf";
+    public static final String RESULT = "./results/%s/hansard-%s.pdf";
 
     public static void copyHalamanFrontPage() throws DocumentException, IOException {
         String topic_title = "0-intro";
@@ -56,7 +60,10 @@ public class HansardCopy {
         PdfCopy copy;
         document = new Document();
         copy = new PdfCopy(document,
-                new FileOutputStream("results/" + topic_title + ".pdf"));
+                new FileOutputStream(String.format(
+                                ITextBlast.working_dir + RESULT,
+                                HansardParser.hansard_filename, topic_title)
+                ));
         document.open();
         for (int i = start_page; i <= end_page; i++) {
             copy.addPage(
@@ -66,6 +73,7 @@ public class HansardCopy {
         // Only if end_page it is NOT
         //  the first page
         //  OR the last page
+        // TODO: Should instead be copied into an independent file; and tagged/logged ...
         if (!((end_page == 1)
                 || (end_page >= HansardParser.my_reader.getNumberOfPages()))) {
             // Then copy out an additional page; just to cover possible extra content 

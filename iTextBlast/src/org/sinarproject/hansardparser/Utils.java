@@ -130,6 +130,10 @@ public class Utils {
     //      of raw speech block tho ..
     // HansardComplete['Topic Title']['Speakers'] --> {  [name:'Speaker1', name:'Speaker2']}
     // HansardComplete['Topic Title']['Log'] --> SpeechBlock1 --> SpeechBlock2 --> Timestamp .. --> ..
+    // The maybes .. attach to the MyStars as game interface or PyBossa: Partial; yes? no? yes --> clean and identify
+    // HansardComplete['Topic Title']['Speakers']['Maybe'] --> Attach Speakers in possible; to be cleaned manually
+    // HansardComplete['Topic Title']['Log']['Maybe'] --> Attach Log; can clean up similarly
+    // HansardComplete['Topic Title']['PDF']['Maybe'] --> File name for the Maybes ..    
     // HansardComplete['Topic Title']['Speaker1'] --> "{ [talked:12, asked:1, objected:5 ] }"
     // HansardComplete['Topic Title']['Speaker2'] --> "{ [talked:12, asked:1, objected:5 ] }"
     // HansardComplete['Topic Title']['Incumbent'] --> "{ [talked:19, asked:10, objected:9 ] }"
