@@ -14,7 +14,6 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfImportedPage;
 import itextblast.ITextBlast;
-import static itextblast.ITextBlast.RESULT;
 import java.io.FileOutputStream;
 import static java.lang.System.out;
 
@@ -24,7 +23,7 @@ import static java.lang.System.out;
  */
 public class HansardCopy {
 
-    public static final String RESULT_MAYBE = "./results/%s/hansard-%s-unsure.pdf";
+    public static final String RESULT_UNSURE = "./results/%s/hansard-%s-unsure.pdf";
     public static final String RESULT = "./results/%s/hansard-%s.pdf";
 
     public static void copyHalamanFrontPage() throws DocumentException, IOException {
@@ -76,6 +75,14 @@ public class HansardCopy {
         // TODO: Should instead be copied into an independent file; and tagged/logged ...
         if (!((end_page == 1)
                 || (end_page >= HansardParser.my_reader.getNumberOfPages()))) {
+            Document half_page_document;
+            PdfCopy half_page_copy;
+            half_page_document = new Document();
+            half_page_copy = new PdfCopy(half_page_document,
+                    new FileOutputStream(String.format(
+                                    ITextBlast.working_dir + RESULT_UNSURE,
+                                    HansardParser.hansard_filename, topic_title)
+                    ));
             // Then copy out an additional page; just to cover possible extra content 
             // not the best; but an acceptable trade-off at this time
             PdfImportedPage my_half_page;
@@ -89,7 +96,9 @@ public class HansardCopy {
              */
             // Since covering with a white square will not save any further space; 
             //  just leave it be .. can look at the approach above at a future time 
-            copy.addPage(my_half_page);
+            half_page_document.open();
+            half_page_copy.addPage(my_half_page);
+            half_page_document.close();
         }
         document.close();
     }

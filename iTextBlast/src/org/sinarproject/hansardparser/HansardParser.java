@@ -33,7 +33,7 @@ public class HansardParser {
     public static String SOURCE
             // = "example/DR-PARLIMEN/DR-18062015.PDF";
             = "example/DR-PARLIMEN/2015/DR-17062015.PDF";
-            // = "example/DR-PARLIMEN/2015/DR-18062015.PDF";  
+    // = "example/DR-PARLIMEN/2015/DR-18062015.PDF";  
     // = "example/DR-PARLIMEN/2015/DR-24062013.pdf";
     // PdfReader for multiple uses?
     // The two items below should NOT be static; danger to race /override conditions likely .. :P
@@ -55,11 +55,16 @@ public class HansardParser {
         }
         // Assign it for later reuse ..
         HansardParser.my_reader = reader;
-        HansardParser.processHansardStructure();
+        HansardParser.processHansardStructure("default");
     }
 
-    public static void processHansardFile(String hansard_filename) {
-        out.println("Inside the function processHansardFile!!");
+    public static void processHansardFile(String hansard_filename, String mymeta) {
+        if (mymeta == null) {
+            out.println("Inside the function processHansardFile!!");
+            mymeta = "split"; // Avialble metas: "all", "split", "speakers"
+        } else {
+            out.println("Inside the function processHansardFile with meta of " + mymeta);
+        }
         out.println("PROCESSING " + hansard_filename + " in " + ITextBlast.working_dir);
         // Fill up the reader link
         PdfReader reader = null;
@@ -71,33 +76,44 @@ public class HansardParser {
         // Assign it for later reuse ..
         HansardParser.my_reader = reader;
         HansardParser.hansard_filename = hansard_filename;
-        HansardParser.processHansardStructure();
+        HansardParser.processHansardStructure(mymeta);
     }
 
-    private static void processHansardStructure() {
+    private static void processHansardStructure(String mymeta) {
         // Below gets the Topics associated with each page ..
         Map<Integer, List<String>> myHalamanHash;
         myHalamanHash = HansardParser.getHalaman(HansardParser.my_reader);
         // Below gets the start page and end page mappings
         Map<Integer, Integer> myHalamanStartEnd;
         myHalamanStartEnd = HansardParser.splitHalamanbyTopic(myHalamanHash);
-        try {
-            // Below copies out the files and split them ..
-            HansardCopy.copyHalamanbyTopic(myHalamanStartEnd, myHalamanHash);
-        } catch (FileNotFoundException | DocumentException ex) {
-            Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        try {
-            // Copy the front page (index) for further use as needed
-            HansardCopy.copyHalamanFrontPage();
-            // OPTIONAL: Identify the playas
-            // HansardParser.identifySpeakersinTopic(myHalamanStartEnd, myHalamanHash);
-        } catch (DocumentException | IOException ex) {
-            Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+
+        if ("all".equals(mymeta) || "split".equals(mymeta)) {
+            // ACTION: Split and copy (in "all" and "split")
+            try {
+                // Below copies out the files and split them ..
+                HansardCopy.copyHalamanbyTopic(myHalamanStartEnd, myHalamanHash);
+            } catch (FileNotFoundException | DocumentException ex) {
+                Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            try {
+                // Copy the front page (index) for further use as needed
+                HansardCopy.copyHalamanFrontPage();
+            } catch (DocumentException | IOException ex) {
+                Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
+        if ("all".equals(mymeta) || "speakers".equals(mymeta)) {
+            try {
+                // ACTION: Identify speakers (in "all" and "speakers")
+                // Identify the playas
+                HansardParser.identifySpeakersinTopic(myHalamanStartEnd, myHalamanHash);
+            } catch (IOException ex) {
+                Logger.getLogger(HansardParser.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     private static void prepareSpeechBlock(String final_marked_content) {

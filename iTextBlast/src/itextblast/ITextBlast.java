@@ -37,6 +37,7 @@ public class ITextBlast {
     private static PdfReader my_reader;
     private static String qa_filename;
     private static String myaction;
+    private static String mymeta;
 
     /**
      * Main method.
@@ -49,6 +50,7 @@ public class ITextBlast {
                 ITextBlast.working_dir = args[0];
                 ITextBlast.qa_filename = args[1];
                 ITextBlast.myaction = args[2];
+                ITextBlast.mymeta = args[3];
             } else {
                 // Extract filemame from CLI
                 // otherwise use below as default ..
@@ -66,7 +68,7 @@ public class ITextBlast {
             } else if ("--parser=hansard".equals(ITextBlast.myaction)) {
                 // Pass in the filename of the PDF beig processed ..
                 // TODO: should refactor and rename variable
-                HansardParser.processHansardFile(ITextBlast.qa_filename);
+                HansardParser.processHansardFile(ITextBlast.qa_filename, ITextBlast.mymeta);
             } else {
                 // Don;t know what to do; note it and go away .. possibly throw error?
                 out.println("I don't know what to do.  Arg is " + ITextBlast.myaction);

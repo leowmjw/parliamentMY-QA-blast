@@ -32,9 +32,10 @@ do
         # create the output folder in results ...
         mkdir -p ${my_cwd}/results/${current_filename}
 	# Execute the code ..
-        # the difference is the passing in of the different parser
-        # next time should refactor it to be a generic target ... try it out for now ..
-        java -jar ${my_cwd}/./iTextBlast/dist/iTextBlast.jar ${my_cwd}/ ${current_filename} --parser=hansard | tee ${my_cwd}/logs/${current_filename}.log  
+        # Use "$@" to pass all remaining params '"' important; Reference: <<put URL here>>
+        # NOTE: When using exec; cannot use "\" to have separate multi-line; looks like 
+        #   does not work .. hmm
+        exec java -jar ${my_cwd}/./iTextBlast/dist/iTextBlast.jar ${my_cwd}/ ${current_filename} --parser=hansard "$@" | tee ${my_cwd}/logs/${current_filename}.log  
     else
         echo "SKIP: ${current_file}"
     fi
