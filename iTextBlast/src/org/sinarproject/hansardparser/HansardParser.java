@@ -55,7 +55,7 @@ public class HansardParser {
         }
         // Assign it for later reuse ..
         HansardParser.my_reader = reader;
-        HansardParser.processHansardStructure("default");
+        HansardParser.processHansardStructure("all");
     }
 
     public static void processHansardFile(String hansard_filename, String mymeta) {

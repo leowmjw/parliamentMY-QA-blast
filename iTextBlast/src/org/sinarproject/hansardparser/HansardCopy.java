@@ -75,8 +75,10 @@ public class HansardCopy {
         // TODO: Should instead be copied into an independent file; and tagged/logged ...
         if (!((end_page == 1)
                 || (end_page >= HansardParser.my_reader.getNumberOfPages()))) {
+            // Declarations
             Document half_page_document;
             PdfCopy half_page_copy;
+            // Initialize the Docs and copies ..
             half_page_document = new Document();
             half_page_copy = new PdfCopy(half_page_document,
                     new FileOutputStream(String.format(
@@ -86,7 +88,7 @@ public class HansardCopy {
             // Then copy out an additional page; just to cover possible extra content 
             // not the best; but an acceptable trade-off at this time
             PdfImportedPage my_half_page;
-            my_half_page = copy.getImportedPage(HansardParser.my_reader, end_page + 1);
+            my_half_page = half_page_copy.getImportedPage(HansardParser.my_reader, end_page + 1);
             // A layer that goes on top of the text and graphics
             //  You can get an instance of this upper layer with the method 
             //  PdfWriter.getDirectContent().

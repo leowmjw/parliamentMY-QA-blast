@@ -49,8 +49,16 @@ public class ITextBlast {
             if (args.length > 0) {
                 ITextBlast.working_dir = args[0];
                 ITextBlast.qa_filename = args[1];
-                ITextBlast.myaction = args[2];
-                ITextBlast.mymeta = args[3];
+                if (args.length > 2) {
+                    ITextBlast.myaction = args[2];
+                } else {
+                    ITextBlast.myaction = "default";
+                }
+                if (args.length > 3) {
+                    ITextBlast.mymeta = args[3];
+                } else {
+                    ITextBlast.mymeta = "";
+                }
             } else {
                 // Extract filemame from CLI
                 // otherwise use below as default ..
@@ -61,7 +69,7 @@ public class ITextBlast {
             // TODO: as preparation; create the resulting output folder?? if does not exist already
             // TODO: Should ne more flexible than requiring the exact correct order; 
             //  but leave that as an exercise for the future
-            if (ITextBlast.myaction == null) {
+            if ("default".equals(ITextBlast.myaction)) {
                 out.println("Default behavor ..");
                 // Default behavior ..
                 ITextBlast.processQAFile(ITextBlast.qa_filename);
