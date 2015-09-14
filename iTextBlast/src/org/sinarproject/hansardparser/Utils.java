@@ -3,10 +3,18 @@
  */
 package org.sinarproject.hansardparser;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import static java.lang.System.out;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.boon.Boon;
+import org.boon.json.JsonFactory;
+import org.boon.json.ObjectMapper;
 
 /**
  *
@@ -81,6 +89,25 @@ public class Utils {
         // Flatten content; before trying a match ..
         // by default assumes NO content from Previous Topic ..
         return false;
+    }
+    
+    public static void writeMergedContent(Map<String, String> mycontent) {
+        // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
+        // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
+        // JSON lines?
+        Boon.puts(mycontent);
+        
+        ObjectMapper object_mapper;
+        object_mapper = JsonFactory.create();
+        // DEBUG: Output as JSON
+        out.println(object_mapper.toJson(mycontent));
+        try {
+            // Write to file instead ..
+            object_mapper.writeValue(new FileOutputStream(""), mycontent);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
 
     // pattern matching of speaker
