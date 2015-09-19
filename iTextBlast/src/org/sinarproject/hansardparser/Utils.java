@@ -3,13 +3,9 @@
  */
 package org.sinarproject.hansardparser;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import static java.lang.System.out;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.boon.Boon;
@@ -26,7 +22,7 @@ public class Utils {
     private static final String more_than_one_space_regexp = "\\s+";
     private static final Pattern pattern_more_than_one_space = Pattern.compile(more_than_one_space_regexp);
     // above try the private static final pattern ..
-    private static final String disallow_number_dot_speakers_regexp = "";
+    private static final String disallow_number_dot_speakers_regexp = "[^\\[\\]\\w\\s]";
     private static final Pattern pattern_illegal_speaker = Pattern.compile(disallow_number_dot_speakers_regexp);
     private static final String not_word_number_topic_regexp = "[^\\w\\d\\s]";
     private static final Pattern pattern_illegal_topic = Pattern.compile(not_word_number_topic_regexp);
@@ -83,31 +79,59 @@ public class Utils {
         // clean first to standard to make sure we can put in the right index ..
 
     }
-    
+
     public static boolean hasContentfromPreviousTopic(String current_topic_title) {
         // Ignore the DR pattern; and see after that ..
         // Flatten content; before trying a match ..
         // by default assumes NO content from Previous Topic ..
         return false;
     }
-    
-    public static void writeMergedContent(Map<String, String> mycontent) {
+
+    public static void writeMergedSpeakers(Map<String, Boolean> speakers_map,
+            String result_file_path) {
         // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
-        Boon.puts(mycontent);
-        
+        out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
+        Boon.puts(speakers_map);
+
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
         // DEBUG: Output as JSON
-        out.println(object_mapper.toJson(mycontent));
-        try {
-            // Write to file instead ..
-            object_mapper.writeValue(new FileOutputStream(""), mycontent);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
+        out.println("Boon toJSON ************>>>>>>>>");
+        out.println(object_mapper.toJson(speakers_map));
+        /* DEBUG
+         try {
+         object_mapper.writeValue(new FileOutputStream(result_file_path), speakers_map);
+         } catch (FileNotFoundException ex) {
+         Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+         }
+         */
+
+    }
+
+    public static void writeMergedSpeechTranscripts(
+            List<Map<String, String>> speech_transcript_logs,
+            String result_file_path) {
+        // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
+        // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
+        // JSON lines?
+        out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
+        Boon.puts(speech_transcript_logs);
+
+        ObjectMapper object_mapper;
+        object_mapper = JsonFactory.create();
+        // DEBUG: Output as JSON
+        out.println("Boon toJSON ************>>>>>>>>");
+        out.println(object_mapper.toJson(speech_transcript_logs));
+        /* DEBUG
+         try {
+         object_mapper.writeValue(new FileOutputStream(result_file_path), speech_transcript_logs);
+         } catch (FileNotFoundException ex) {
+         Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+         }
+         */
+
     }
 
     // pattern matching of speaker
@@ -129,7 +153,7 @@ public class Utils {
     }
 
     // clean up of speakers??
-    private static String cleanSpeakersName(String raw_speakers_name) {
+    public static String cleanSpeakersName(String raw_speakers_name) {
         // remove chars not allowed
         Matcher matched_illegal_speaker = pattern_illegal_speaker.matcher(raw_speakers_name);
         // apply a trim
@@ -141,6 +165,12 @@ public class Utils {
         return matched_extra_space.replaceAll(" ");
 
     }
+    
+    // IDEA: Post-processing
+    // [KEY] - @Replace_With, @Unmodified_Name, @Post, @Area
+    //      look for keywords like Menteri; if yes; extract from to match [], basic scan
+    //      Write in standard <@Unmodified_Name> (@Post) <@Area>
+    //      @Unmodified_Name should come from the Map<KEY,Unmodifeid_Name> insead of Boolean
 
     // Keeping track of overall speakers stats
     // Scenarios:

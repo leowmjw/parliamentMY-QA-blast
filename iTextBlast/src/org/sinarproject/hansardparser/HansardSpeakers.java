@@ -7,6 +7,7 @@ package org.sinarproject.hansardparser;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import java.io.IOException;
 import static java.lang.System.out;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,16 +25,17 @@ public class HansardSpeakers {
     public static final String RESULT_SPEAKERS = "./results/%s/h-speakers-%s.pdf";
     public static final String RESULT_SPEAKERS_UNSURE = "./results/%s/h-speakers-%s-unsure.pdf";
     public static final String RESULT_TRANSCRIPT = "./results/%s/h-transcript-%s.pdf";
+    public static final String RESULT_TRANSCRIPT_UNSURE = "./results/%s/h-transcript-%s-unsure.pdf";
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
-        // NOTE: Assumes: first page is index; and there is offset .. does it apply across the spectrum??
-        // Should probably put a safe guard to test actual start/end ...
-        // Look out for the DR pattern and its page number ..
-        // TODO: Above ..
-        // Prepare the data structures to be returned .. (see Utils.java)
-        Map<String, String> myHansardComplete = new HashMap<>();
-        // HansardComplete['Topic Title']['Speakers'] --> {  [name:'Speaker1', name:'Speaker2']}
-        // HansardComplete['Topic Title']['Log'] --> SpeechBlock1 --> SpeechBlock2 --> Timestamp .. --> ..
+        Map<String, Boolean> hansard_complete_speakers;
+        hansard_complete_speakers = new TreeMap<>();
+        Map<String, Boolean> hansard_unsure_speakers;
+        hansard_unsure_speakers = new TreeMap<>();
+        List<Map<String, String>> hansard_complete_logs;
+        hansard_complete_logs = new ArrayList<>();
+        List<Map<String, String>> hansard_unsure_logs;
+        hansard_unsure_logs = new ArrayList<>();
 
         for (Integer current_page : myHalamanStartEnd.keySet()) {
             // Get the cleaned up topicbypagenumber .. which is the KEY to the Map 
@@ -53,7 +55,13 @@ public class HansardSpeakers {
                 String content = PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i);
                 // out.println(content);
                 // Identify people ..
-                preparePage(content);
+                hansard_complete_speakers.putAll(observeSpeakers(content));
+                Utils.writeMergedSpeakers(hansard_complete_speakers, "");
+                // Identify speech block and order them out ..
+                //  put under the growing array for this topic
+                hansard_complete_logs.addAll(preparePage(content));
+                Utils.writeMergedSpeechTranscripts(hansard_complete_logs, "");
+                // extract and write out into JSON log as per Topic
                 // ... and what they say??
                 // How to regexp detect paragraph ..
             }
@@ -66,7 +74,13 @@ public class HansardSpeakers {
                 String content = PdfTextExtractor.getTextFromPage(HansardParser.my_reader, (end_page + 1));
                 // out.println(content);
                 // Identify people ..
-                preparePage(content);
+                hansard_unsure_speakers.putAll(observeSpeakers(content));
+                Utils.writeMergedSpeakers(hansard_unsure_speakers, "");
+                // Identify speech block and order them out ..
+                //  put under the growing array for this topic
+                hansard_unsure_logs.addAll(preparePage(content));
+                Utils.writeMergedSpeechTranscripts(hansard_unsure_logs, "");
+                // extract and write out into JSON log as per Topic
                 // The maybes .. attach to the MyStars as game interface or PyBossa: Partial; yes? no? yes --> clean and identify
                 // HansardComplete['Topic Title']['Speakers_Maybe'] --> Attach Speakers in possible; to be cleaned manually
                 // HansardComplete['Topic Title']['Log_Maybe'] --> Attach Log; can clean up similarly
@@ -77,22 +91,44 @@ public class HansardSpeakers {
                 // HashMap or TreeMap?
                 // Map<String, Map<String, String>> mymap = new TreeMap<>();
             }
-            // Rescan needed? no need; just give CMS to tag their speech ..
-            // DEBUG: For demo; break out after first cycle as per below:
-            // break;
-
             // What to do with the HaansardComplete Map??
-            // DUMP it!!
+            // DUMP it out to file per topic!!
+            // DEBUG: For demo; break out after first cycle as per below:
+            break;
+
         }
 
         out.println("Final ERR Count: " + HansardParser.my_error_count);
     }
 
     /*
-     *
-     * Returns: Map<String,String> overAllSpeakers
+     * Use pattern to extract out unique sorted list of Speakers
+     * FUTURE: Pull data from PopIt to identify?
+     * Returns: Sorted List of speakers 
      */
-    private static void preparePage(String content) {
+    private static Map<String, Boolean> observeSpeakers(String content) {
+        // Inits ..
+        Map<String, Boolean> speaker_map = new TreeMap<>();
+        // Pattern below
+        Pattern pattern_mark_speakers;
+        pattern_mark_speakers = Pattern.compile("(.+?\\:)");
+        Matcher found_speakers = pattern_mark_speakers.matcher(content);
+        out.println("SPEAKERS:");
+        while (found_speakers.find()) {
+            String normalized_speaker_name = Utils.cleanSpeakersName(found_speakers.group(1));
+            // Just put it .. is fine .. only unique KV
+            speaker_map.put(normalized_speaker_name, Boolean.TRUE);
+            out.println("Normalized:" + found_speakers.group(1) + " ==> " + normalized_speaker_name);
+        }
+        out.println("<<<<<<<<<<<<<>>>>>>>>>>>>");
+        return speaker_map;
+    }
+
+    /*
+     * Input: content
+     * Returns: Map<String, List<Map<String, String>>> overAllSpeakersLogs
+     */
+    private static List<Map<String, String>> preparePage(String content) {
         // Prepare page for analysis
         // Remove the DR line
         // Remove timeline marker??
@@ -101,6 +137,7 @@ public class HansardSpeakers {
         pattern_speaker_exist = Pattern.compile("\\:");
         Pattern pattern_speaker_alt_exist;
         pattern_speaker_alt_exist = Pattern.compile("\\[.+?\\]");
+        List<Map<String, String>> speakers_transcript_map;
         // Identify all the players and append the special >>IMOKMAN** tag to name
         // else if match the alternative patterns is OK too ...
         if (pattern_speaker_exist.matcher(content).find()
@@ -109,13 +146,15 @@ public class HansardSpeakers {
             // put here since need to use it first to identify speakers in page ..
             Pattern pattern_mark_speakers;
             pattern_mark_speakers = Pattern.compile("(.+?\\:)");
-            Matcher found_speakers = pattern_mark_speakers.matcher(content);
-            // Below for debugging purpose; should be attached to overall instead??
-            out.println("SPEAKERS:");
-            while (found_speakers.find()) {
-                out.println(found_speakers.group(1));
-            }
-            out.println("<<<<<<<<<<<<<>>>>>>>>>>>>");
+            // DEBUG: Speakers found; no uniq, that will be handled later in prepareSpeechBlock
+            /*
+             Matcher found_speakers = pattern_mark_speakers.matcher(content);
+             out.println("SPEAKERS:");
+             while (found_speakers.find()) {
+             out.println(found_speakers.group(1));
+             }
+             out.println("<<<<<<<<<<<<<>>>>>>>>>>>>");
+             */
             // Do ALT first ... otherwise will have double ..
             Pattern pattern_mark_alt_speakers;
             // Pattern is [ ]+?(.+?\[.+?\])\s+?
@@ -131,20 +170,30 @@ public class HansardSpeakers {
             Matcher matched_speakers = pattern_mark_speakers.matcher(marked_content);
             String final_marked_content;
             final_marked_content = matched_speakers.replaceAll(">>IMOKMAN**$1");
-            // For debugging
-            // out.println(final_marked_content);
-            prepareSpeechBlock(final_marked_content);
+            // Get the speech blocks as a timeline out ..
+            speakers_transcript_map = prepareSpeechBlock(final_marked_content);
 
         } // else process and atatch to previous speaker
         else {
             // Skip for now
-            out.println("Found no speaker :( ... skipping ..");
+            out.println("Found no speaker; assign to previousidentified speaker ..");
+            speakers_transcript_map = new ArrayList<>();
+            Map<String, String> m;
+            m = new HashMap<>();
             // Next time attch to the last known speaker ..
+            m.put(HansardSpeakers.last_identified_speaker, content);
+            // Put back all the needed dta ..
+            speakers_transcript_map.add(m);
         }
-
+        // Return the Map; even though it may be empty!!
+        return speakers_transcript_map;
     }
 
-    private static void prepareSpeechBlock(String final_marked_content) {
+    // 
+    // Pass In: Final marked up content with the special IMOKMAN keyword
+    // Returns: Map of SpeechBlock; hash [Normalized_Speaker][] --> 
+    //
+    private static List<Map<String, String>> prepareSpeechBlock(String final_marked_content) {
 
         // replace all newline with space /\n+/g
         Pattern pattern_newlines;
@@ -156,6 +205,13 @@ public class HansardSpeakers {
         pattern_marked_speakers = Pattern.compile("(\\s+.+?|IMOKMAN\\*\\*)(.+?)(>>|$)");
 
         Matcher matched_marked_speakers = pattern_marked_speakers.matcher(final_marked_content);
+        // =========================
+        // Initialize Ordered List for speech transcript; each row with 
+        //  one speaker and what the speaker said mapping
+        List<Map<String, String>> speaker_transcript = new ArrayList<>();
+        // Structure Looks like below: 
+        // List[] --> [speaker]=> [content_transcript]
+
         while (matched_marked_speakers.find()) {
             String matched_speech_block = matched_marked_speakers.group(2);
             // Check both patterns to extract out speaker ..
@@ -166,16 +222,29 @@ public class HansardSpeakers {
             // Pattern is [ ]+?(.+?\[.+?\])\s+?
             pattern_mark_alt_speakers = Pattern.compile("([ ]+.+\\[.+\\]\\s+?)");
             Matcher matched_alt_speakers = pattern_mark_alt_speakers.matcher(matched_speech_block);
-
-            // Below for SPEECH_BLOCK
-            String final_message = "";
-            String final_speaker = "";
+            // Initialize data to be added every loop through the while ..
+            String final_message;
+            final_message = "";
+            String final_speaker;
+            final_speaker = "";
             if (found_speakers.find()) {
-                final_speaker = found_speakers.group(1);
+                final_speaker = Utils.cleanSpeakersName(found_speakers.group(1));
                 final_message = found_speakers.replaceAll("");
+                Map<String, String> m;
+                m = new TreeMap();
+                m.put(final_speaker, final_message);
+                speaker_transcript.add(m);
+                // Mark the last guy to move on to the next page ..
+                HansardSpeakers.last_identified_speaker = final_speaker;
             } else if (matched_alt_speakers.find()) {
-                final_speaker = matched_alt_speakers.group(1);
+                final_speaker = Utils.cleanSpeakersName(matched_alt_speakers.group(1));
                 final_message = matched_alt_speakers.replaceAll("");
+                Map<String, String> m;
+                m = new TreeMap();
+                m.put(final_speaker, final_message);
+                speaker_transcript.add(m);
+                // Mark the last guy to move on to the next page ..
+                HansardSpeakers.last_identified_speaker = final_speaker;
             } else {
                 final_speaker = "ERR";
                 final_message = matched_speech_block;
@@ -187,12 +256,9 @@ public class HansardSpeakers {
              out.println("Speaker " + final_speaker + " says ---> " + final_message);
              out.println("=============================");
              */
-            // Split out speaker from what was said; look for the : pattern
-            // Maybe even detect time marker??
-            // Special case; from previous page; append the previous guy ..
-            // Mark the last guy to move on to the next page ..
-
         }
+        // return Map that was initialized earlier .. even if it is empty
+        return speaker_transcript;
     }
 
 }
