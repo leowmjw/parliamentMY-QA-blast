@@ -28,9 +28,9 @@ public class HansardSpeakers {
     public static final String RESULT_TRANSCRIPT_UNSURE = "./results/%s/h-transcript-%s-unsure.pdf";
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
-        Map<String, Boolean> hansard_complete_speakers;
+        Map<String, String> hansard_complete_speakers;
         hansard_complete_speakers = new TreeMap<>();
-        Map<String, Boolean> hansard_unsure_speakers;
+        Map<String, String> hansard_unsure_speakers;
         hansard_unsure_speakers = new TreeMap<>();
         List<Map<String, String>> hansard_complete_logs;
         hansard_complete_logs = new ArrayList<>();
@@ -52,7 +52,12 @@ public class HansardSpeakers {
                 // use location based strategy
                 out.println("Page " + i);
                 out.println("===========");
-                String content = PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i);
+                // Clean the content out of DR headers before next stage in the pipelines ..
+                String content = Utils.cleanActionsInHall(
+                        Utils.cleanContentHeader(
+                                PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i)
+                        )
+                );
                 // out.println(content);
                 // Identify people ..
                 hansard_complete_speakers.putAll(observeSpeakers(content));
@@ -71,7 +76,13 @@ public class HansardSpeakers {
                 // Put the Maybe here ..
                 out.println("Page " + (end_page + 1));
                 out.println("===========");
-                String content = PdfTextExtractor.getTextFromPage(HansardParser.my_reader, (end_page + 1));
+                String content = Utils.cleanActionsInHall(
+                        Utils.cleanContentHeader(
+                                PdfTextExtractor.getTextFromPage(
+                                        HansardParser.my_reader, (end_page + 1)
+                                )
+                        )
+                );
                 // out.println(content);
                 // Identify people ..
                 hansard_unsure_speakers.putAll(observeSpeakers(content));
@@ -106,21 +117,24 @@ public class HansardSpeakers {
      * FUTURE: Pull data from PopIt to identify?
      * Returns: Sorted List of speakers 
      */
-    private static Map<String, Boolean> observeSpeakers(String content) {
+    private static Map<String, String> observeSpeakers(String content) {
         // Inits ..
-        Map<String, Boolean> speaker_map = new TreeMap<>();
+        Map<String, String> speaker_map = new TreeMap<>();
         // Pattern below
         Pattern pattern_mark_speakers;
         pattern_mark_speakers = Pattern.compile("(.+?\\:)");
         Matcher found_speakers = pattern_mark_speakers.matcher(content);
-        out.println("SPEAKERS:");
+        // DEBUG:
+        // out.println("SPEAKERS:");
         while (found_speakers.find()) {
             String normalized_speaker_name = Utils.cleanSpeakersName(found_speakers.group(1));
             // Just put it .. is fine .. only unique KV
-            speaker_map.put(normalized_speaker_name, Boolean.TRUE);
-            out.println("Normalized:" + found_speakers.group(1) + " ==> " + normalized_speaker_name);
+            speaker_map.put(normalized_speaker_name, found_speakers.group(1).trim());
+            // DEBUG: Below to show conversion to the normalized form
+            // out.println("Normalized:" + found_speakers.group(1) + " ==> " + normalized_speaker_name);
         }
-        out.println("<<<<<<<<<<<<<>>>>>>>>>>>>");
+        // DEBUG: 
+        // out.println("<<<<<<<<<<<<<>>>>>>>>>>>>");
         return speaker_map;
     }
 
@@ -137,6 +151,8 @@ public class HansardSpeakers {
         pattern_speaker_exist = Pattern.compile("\\:");
         Pattern pattern_speaker_alt_exist;
         pattern_speaker_alt_exist = Pattern.compile("\\[.+?\\]");
+        // TODO: Future idea; make the timestamp pattern be recognized as a speaker
+        //      hardcode in a Speaker name of IMOKMAN_Clock:  10.45 am ..
         List<Map<String, String>> speakers_transcript_map;
         // Identify all the players and append the special >>IMOKMAN** tag to name
         // else if match the alternative patterns is OK too ...
@@ -176,7 +192,7 @@ public class HansardSpeakers {
         } // else process and atatch to previous speaker
         else {
             // Skip for now
-            out.println("Found no speaker; assign to previousidentified speaker ..");
+            out.println("Found no speaker; assign to previous identified speaker ==> " + HansardSpeakers.last_identified_speaker);
             speakers_transcript_map = new ArrayList<>();
             Map<String, String> m;
             m = new HashMap<>();
@@ -246,16 +262,18 @@ public class HansardSpeakers {
                 // Mark the last guy to move on to the next page ..
                 HansardSpeakers.last_identified_speaker = final_speaker;
             } else {
-                final_speaker = "ERR";
+                // final_speaker = "ERR";
+                final_speaker = HansardSpeakers.last_identified_speaker;
                 final_message = matched_speech_block;
                 HansardParser.my_error_count++;
+                // DEBUG: Below for debugging purposes ..
+
+                out.println("ERROR_SPEECH_BLOCK");
+                out.println("Speaker " + final_speaker + " says ---> " + final_message);
+                out.println("=============================");
+                out.println(final_marked_content);
+
             }
-            // DEBUG: Below for debugging purposes ..
-            /*
-             out.println("SPEECH_BLOCK");
-             out.println("Speaker " + final_speaker + " says ---> " + final_message);
-             out.println("=============================");
-             */
         }
         // return Map that was initialized earlier .. even if it is empty
         return speaker_transcript;

@@ -22,13 +22,15 @@ public class Utils {
     private static final String more_than_one_space_regexp = "\\s+";
     private static final Pattern pattern_more_than_one_space = Pattern.compile(more_than_one_space_regexp);
     // above try the private static final pattern ..
-    private static final String disallow_number_dot_speakers_regexp = "[^\\[\\]\\w\\s]";
+    private static final String disallow_number_dot_speakers_regexp = "[^\\w\\s]";
     private static final Pattern pattern_illegal_speaker = Pattern.compile(disallow_number_dot_speakers_regexp);
     private static final String not_word_number_topic_regexp = "[^\\w\\d\\s]";
     private static final Pattern pattern_illegal_topic = Pattern.compile(not_word_number_topic_regexp);
-    private static final String match_speaker_regexp = "";
-    private static final String match_speaker_alt_regexp = "";
+    private static final String document_page_header = "DR\\.\\d+\\.\\d+\\.\\d+.*\\d+";
+    private static final Pattern pattern_document_page_header = Pattern.compile(document_page_header);
     private static final String match_timestamp_regexp = "";
+    private static final String actions_in_hall = "(\\[(dewan riuh)\\]|\\[(tepuk)\\]|\\[(ketawa)\\]|\\[(bercakap.*)\\]|\\[(menunjuk.*)\\])";
+    private static final Pattern pattern_actions_in_hall = Pattern.compile(actions_in_hall, Pattern.CASE_INSENSITIVE);
     // Below are the data structures for maintainign the final mapping for use outside ..
     // HansardComplete['Speakers'] --> {  [name:'Speaker1', name:'Speaker2']}
     private static List<String> all_speakers_who_talked;
@@ -87,19 +89,20 @@ public class Utils {
         return false;
     }
 
-    public static void writeMergedSpeakers(Map<String, Boolean> speakers_map,
+    public static void writeMergedSpeakers(Map<String, String> speakers_map,
             String result_file_path) {
         // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
-        out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
-        Boon.puts(speakers_map);
+        // DEBUG: Raw structure out; before being JSON-ize
+        // out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
+        // Boon.puts(speakers_map);
 
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
         // DEBUG: Output as JSON
-        out.println("Boon toJSON ************>>>>>>>>");
-        out.println(object_mapper.toJson(speakers_map));
+        // out.println("==========  SPEAKERS inJSON  ===========");
+        // out.println(object_mapper.toJson(speakers_map));
         /* DEBUG
          try {
          object_mapper.writeValue(new FileOutputStream(result_file_path), speakers_map);
@@ -116,14 +119,15 @@ public class Utils {
         // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
-        out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
-        Boon.puts(speech_transcript_logs);
+        // DEBUG: Raw structure out; before being JSON-ize
+        // out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
+        // Boon.puts(speech_transcript_logs);
 
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
         // DEBUG: Output as JSON
-        out.println("Boon toJSON ************>>>>>>>>");
-        out.println(object_mapper.toJson(speech_transcript_logs));
+        // out.println("Boon toJSON ************>>>>>>>>");
+        // out.println(object_mapper.toJson(speech_transcript_logs));
         /* DEBUG
          try {
          object_mapper.writeValue(new FileOutputStream(result_file_path), speech_transcript_logs);
@@ -131,6 +135,47 @@ public class Utils {
          Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
          }
          */
+
+    }
+
+    public static String cleanActionsInHall(String raw_content) {
+        Matcher matched_actions_in_hall;
+        matched_actions_in_hall = pattern_actions_in_hall.matcher(raw_content);
+        if (matched_actions_in_hall.find()) {
+            // DEBUG:
+            // out.println("Replace action with @" + matched_actions_in_hall.group(1) + "@");
+            return matched_actions_in_hall.replaceAll("@" + matched_actions_in_hall.group(1) + "@");
+            // return matched_actions_in_hall.replaceAll("");
+        }
+        return raw_content;
+    }
+
+    // Pattern match only the first line??
+    // Match the DR pattern .
+    public static String cleanContentHeader(String raw_content) {
+
+        Matcher matched_document_page_header;
+        matched_document_page_header = pattern_document_page_header.matcher(raw_content);
+        // Remove full the pattern: /^DR\.\d+\.\d+\.\d+.*\d+/g 
+        // Example: DR.18.6.2015 7 
+        if (matched_document_page_header.find()) {
+            return matched_document_page_header.replaceAll("");
+        }
+        return raw_content;
+    }
+
+    // clean up of speakers??
+    public static String cleanSpeakersName(String raw_speakers_name) {
+        // remove chars not allowed
+        Matcher matched_illegal_speaker = pattern_illegal_speaker.matcher(raw_speakers_name);
+        // apply a trim
+        // remove extra spaec ebecome one
+        // Make things all UPPERCASE so it is standardized!
+        Matcher matched_extra_space = pattern_more_than_one_space.matcher(
+                matched_illegal_speaker.replaceAll("").trim().toUpperCase()
+        );
+        // For speakers replace with space ...
+        return matched_extra_space.replaceAll("_");
 
     }
 
@@ -152,26 +197,11 @@ public class Utils {
 
     }
 
-    // clean up of speakers??
-    public static String cleanSpeakersName(String raw_speakers_name) {
-        // remove chars not allowed
-        Matcher matched_illegal_speaker = pattern_illegal_speaker.matcher(raw_speakers_name);
-        // apply a trim
-        // remove extra spaec ebecome one
-        Matcher matched_extra_space = pattern_more_than_one_space.matcher(
-                matched_illegal_speaker.replaceAll("").trim()
-        );
-        // For speakers replace with space ...
-        return matched_extra_space.replaceAll(" ");
-
-    }
-    
     // IDEA: Post-processing
     // [KEY] - @Replace_With, @Unmodified_Name, @Post, @Area
     //      look for keywords like Menteri; if yes; extract from to match [], basic scan
     //      Write in standard <@Unmodified_Name> (@Post) <@Area>
     //      @Unmodified_Name should come from the Map<KEY,Unmodifeid_Name> insead of Boolean
-
     // Keeping track of overall speakers stats
     // Scenarios:
     // a) Who spoke in this session? Semi-correct attendance for those who appeared ..
