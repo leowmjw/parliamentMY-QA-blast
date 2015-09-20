@@ -53,10 +53,8 @@ public class HansardSpeakers {
                 out.println("Page " + i);
                 out.println("===========");
                 // Clean the content out of DR headers before next stage in the pipelines ..
-                String content = Utils.cleanActionsInHall(
-                        Utils.cleanContentHeader(
-                                PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i)
-                        )
+                String content = Utils.prepareContentForSpeakerIdentification(
+                        PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i)
                 );
                 // out.println(content);
                 // Identify people ..
@@ -76,11 +74,9 @@ public class HansardSpeakers {
                 // Put the Maybe here ..
                 out.println("Page " + (end_page + 1));
                 out.println("===========");
-                String content = Utils.cleanActionsInHall(
-                        Utils.cleanContentHeader(
-                                PdfTextExtractor.getTextFromPage(
-                                        HansardParser.my_reader, (end_page + 1)
-                                )
+                String content = Utils.prepareContentForSpeakerIdentification(
+                        PdfTextExtractor.getTextFromPage(
+                                HansardParser.my_reader, (end_page + 1)
                         )
                 );
                 // out.println(content);

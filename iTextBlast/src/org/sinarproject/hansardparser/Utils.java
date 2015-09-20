@@ -26,9 +26,10 @@ public class Utils {
     private static final Pattern pattern_illegal_speaker = Pattern.compile(disallow_number_dot_speakers_regexp);
     private static final String not_word_number_topic_regexp = "[^\\w\\d\\s]";
     private static final Pattern pattern_illegal_topic = Pattern.compile(not_word_number_topic_regexp);
-    private static final String document_page_header = "DR\\.\\d+\\.\\d+\\.\\d+.*\\d+";
+    private static final String document_page_header = "^DR\\.\\d+\\.\\d+\\.\\d+.*\\d+";
     private static final Pattern pattern_document_page_header = Pattern.compile(document_page_header);
-    private static final String match_timestamp_regexp = "";
+    private static final String imokman_timestamp = "■(.*)";
+    private static final Pattern pattern_imokman_timestamp = Pattern.compile(imokman_timestamp);
     private static final String actions_in_hall = "(\\[(dewan riuh)\\]|\\[(tepuk)\\]|\\[(ketawa)\\]|\\[(bercakap.*)\\]|\\[(menunjuk.*)\\])";
     private static final Pattern pattern_actions_in_hall = Pattern.compile(actions_in_hall, Pattern.CASE_INSENSITIVE);
     // Below are the data structures for maintainign the final mapping for use outside ..
@@ -138,30 +139,12 @@ public class Utils {
 
     }
 
-    public static String cleanActionsInHall(String raw_content) {
-        Matcher matched_actions_in_hall;
-        matched_actions_in_hall = pattern_actions_in_hall.matcher(raw_content);
-        if (matched_actions_in_hall.find()) {
-            // DEBUG:
-            // out.println("Replace action with @" + matched_actions_in_hall.group(1) + "@");
-            return matched_actions_in_hall.replaceAll("@" + matched_actions_in_hall.group(1) + "@");
-            // return matched_actions_in_hall.replaceAll("");
-        }
-        return raw_content;
-    }
-
-    // Pattern match only the first line??
-    // Match the DR pattern .
-    public static String cleanContentHeader(String raw_content) {
-
-        Matcher matched_document_page_header;
-        matched_document_page_header = pattern_document_page_header.matcher(raw_content);
-        // Remove full the pattern: /^DR\.\d+\.\d+\.\d+.*\d+/g 
-        // Example: DR.18.6.2015 7 
-        if (matched_document_page_header.find()) {
-            return matched_document_page_header.replaceAll("");
-        }
-        return raw_content;
+    public static String prepareContentForSpeakerIdentification(String raw_content) {
+        return renameTimestampWithMetaSpeaker(
+                cleanActionsInHall(
+                        cleanContentHeader(raw_content)
+                )
+        );
     }
 
     // clean up of speakers??
@@ -177,6 +160,41 @@ public class Utils {
         // For speakers replace with space ...
         return matched_extra_space.replaceAll("_");
 
+    }
+
+    private static String renameTimestampWithMetaSpeaker(String raw_content) {
+        Matcher match_imokman_timestamp = pattern_imokman_timestamp.matcher(raw_content);
+        if (match_imokman_timestamp.find()) {
+            // return match_imokman_timestamp.replaceAll("PARLIAMENT @[Clock]@" + match_imokman_timestamp.group(1));
+            return match_imokman_timestamp.replaceAll("");
+        }
+        return raw_content;
+    }
+
+    private static String cleanActionsInHall(String raw_content) {
+        Matcher matched_actions_in_hall;
+        matched_actions_in_hall = pattern_actions_in_hall.matcher(raw_content);
+        if (matched_actions_in_hall.find()) {
+            // DEBUG:
+            // out.println("Replace action with @" + matched_actions_in_hall.group(1) + "@");
+            return matched_actions_in_hall.replaceAll("@" + matched_actions_in_hall.group(1) + "@");
+            // return matched_actions_in_hall.replaceAll("");
+        }
+        return raw_content;
+    }
+
+    // Pattern match only the first line??
+    // Match the DR pattern .
+    private static String cleanContentHeader(String raw_content) {
+
+        Matcher matched_document_page_header;
+        matched_document_page_header = pattern_document_page_header.matcher(raw_content);
+        // Remove full the pattern: /^DR\.\d+\.\d+\.\d+.*\d+/g 
+        // Example: DR.18.6.2015 7 
+        if (matched_document_page_header.find()) {
+            return matched_document_page_header.replaceAll("");
+        }
+        return raw_content;
     }
 
     // pattern matching of speaker
