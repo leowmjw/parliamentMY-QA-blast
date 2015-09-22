@@ -96,8 +96,8 @@ public class Utils {
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
         // DEBUG: Raw structure out; before being JSON-ize
-        // out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
-        // Boon.puts(speakers_map);
+        out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
+        Boon.puts(speakers_map);
 
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
@@ -121,8 +121,8 @@ public class Utils {
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
         // DEBUG: Raw structure out; before being JSON-ize
-        // out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
-        // Boon.puts(speech_transcript_logs);
+        out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
+        Boon.puts(speech_transcript_logs);
 
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
@@ -149,8 +149,29 @@ public class Utils {
 
     // clean up of speakers??
     public static String cleanSpeakersName(String raw_speakers_name) {
-        // remove chars not allowed
-        Matcher matched_illegal_speaker = pattern_illegal_speaker.matcher(raw_speakers_name);
+        // remove chars not allowed; after clearing the edge case of IMOKMAN Canary Trigger
+        //  which means the regexp for detecting Speaker from the Marked Modification
+        //  does not work when the Speaker appears in the very first line
+        //  UGLY, yes! :P
+        // Case Example Snippet below:
+        // CANARY: >IMOKMAN**Tuan Yang di-Pertua
+        // ****** ALERT ******** IMOKMAN Canary Triggered!!! ****** ALERT ********
+        // >>IMOKMAN**Tuan Yang di-Pertua:  Yang Berhormat Menteri, Yang Berhormat Menteri.
+        //  >>IMOKMAN**Tuan Manivannan a/l Gowindasamy [Kapar]:  Who is provoking?  
+        //  >>IMOKMAN**Dato' Haji Tajuddin bin Abdul Rahman:  Who are you?  
+        //  >>IMOKMAN**Tuan Sim Chee Keong [Bukit Mertajam]:  Who is provo
+        //  ...
+        // Look out for ==> IMOKMANTUAN_YANG_DIPERTUA
+        // DEBUG: Canary detection
+        /*
+         if (raw_speakers_name.contains("IMOKMAN")) {
+         out.println("CANARY: " + raw_speakers_name + " and cleanedup is "
+         + raw_speakers_name.replaceAll("\\>IMOKMAN\\*\\*", ""));
+         }
+         */
+        Matcher matched_illegal_speaker = pattern_illegal_speaker.matcher(
+                raw_speakers_name.replaceAll("\\>IMOKMAN\\*\\*", "")
+        );
         // apply a trim
         // remove extra spaec ebecome one
         // Make things all UPPERCASE so it is standardized!

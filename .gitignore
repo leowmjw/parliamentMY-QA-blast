@@ -8,6 +8,7 @@
 /results/
 /logs/
 /archive/
+/tools/
 *.class
 
 # Mobile Tools for Java (J2ME)

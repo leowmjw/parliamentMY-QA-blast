@@ -50,6 +50,8 @@ soalan-19.pdf			soalan-32.pdf			soalan-47.pdf			soalan-61.pdf
 
 ```
 
+Read more about the new Hansard Parser (and see detailed examples as well as intepretation of result) --> iTextBlast/src/org/sinarproject/hansardparser/README.md
+
 Development Environment:
 - Developed with Netbeans; so there is example Netbeans Project incorporated
 - Dependencies: iText jar (put reference to it in your Java project configuration)

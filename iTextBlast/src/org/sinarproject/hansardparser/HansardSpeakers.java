@@ -193,7 +193,7 @@ public class HansardSpeakers {
             Map<String, String> m;
             m = new HashMap<>();
             // Next time attch to the last known speaker ..
-            m.put(HansardSpeakers.last_identified_speaker, content);
+            m.put(HansardSpeakers.last_identified_speaker, content.replaceAll("\\n+", " "));
             // Put back all the needed dta ..
             speakers_transcript_map.add(m);
         }
@@ -259,16 +259,20 @@ public class HansardSpeakers {
                 HansardSpeakers.last_identified_speaker = final_speaker;
             } else {
                 // final_speaker = "ERR";
+                // Edge Case: Speech Block left hanging right before a detected Speaker
                 final_speaker = HansardSpeakers.last_identified_speaker;
-                final_message = matched_speech_block;
+                // Since there is NO Speaker; the message is actually the whole
+                //  matched marked block; otherwise, the observed state is missing
+                //  a single character :)
+                final_message = matched_marked_speakers.group(0).replaceAll("\\n+", " ");
                 HansardParser.my_error_count++;
                 // DEBUG: Below for debugging purposes ..
-
-                out.println("ERROR_SPEECH_BLOCK");
-                out.println("Speaker " + final_speaker + " says ---> " + final_message);
-                out.println("=============================");
-                out.println(final_marked_content);
-
+                /*
+                 out.println("ERROR_SPEECH_BLOCK");
+                 out.println("Speaker " + final_speaker + " says ---> " + final_message);
+                 out.println("=============================");
+                 out.println(final_marked_content);
+                 */
             }
         }
         // return Map that was initialized earlier .. even if it is empty
