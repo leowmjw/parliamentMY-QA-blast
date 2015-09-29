@@ -57,7 +57,8 @@ public class ITextBlast {
                 if (args.length > 3) {
                     ITextBlast.mymeta = args[3];
                 } else {
-                    ITextBlast.mymeta = "";
+                    // Set meta to "all" by default
+                    ITextBlast.mymeta = "all";
                 }
             } else {
                 // Extract filemame from CLI

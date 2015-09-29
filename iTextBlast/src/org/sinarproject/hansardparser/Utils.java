@@ -3,9 +3,15 @@
  */
 package org.sinarproject.hansardparser;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import static java.lang.System.out;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.boon.Boon;
@@ -30,7 +36,9 @@ public class Utils {
     private static final Pattern pattern_document_page_header = Pattern.compile(document_page_header);
     private static final String imokman_timestamp = "■(.*)";
     private static final Pattern pattern_imokman_timestamp = Pattern.compile(imokman_timestamp);
-    private static final String actions_in_hall = "(\\[(dewan riuh)\\]|\\[(tepuk)\\]|\\[(ketawa)\\]|\\[(bercakap.*)\\]|\\[(menunjuk.*)\\])";
+    private static final String actions_in_hall = "(\\[(dewan riuh)\\]|\\[(tepuk)\\]"
+            + "|\\[(ketawa)\\]|\\[(bangun)\\]|\\[(menyampuk)\\])";
+    //      + "|\\[(bercakap.*?)\\]|\\[(menunjuk.*?)\\]|\\[(masa.*?)\\]|\\[(usul.*?)\\]|\\[(bentara.*?)\\])";
     private static final Pattern pattern_actions_in_hall = Pattern.compile(actions_in_hall, Pattern.CASE_INSENSITIVE);
     // Below are the data structures for maintainign the final mapping for use outside ..
     // HansardComplete['Speakers'] --> {  [name:'Speaker1', name:'Speaker2']}
@@ -92,28 +100,27 @@ public class Utils {
 
     public static void writeMergedSpeakers(Map<String, String> speakers_map,
             String result_file_path) {
-        // Good reference to boon v0.3.x; somehow v0.4 looks totally different ..
-        // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
-        // JSON lines?
-        // DEBUG: Raw structure out; before being JSON-ize
-        out.println("writeMergedSpeakers ======xxxxx======xxxxx=====xx=======");
-        Boon.puts(speakers_map);
 
+        /*
+        List<Map<String, String>> l;
+        l = new ArrayList();
+        l.add(speakers_map);
+        */
+        // Add to list to ease making JSONlines ..
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
         // DEBUG: Output as JSON
         // out.println("==========  SPEAKERS inJSON  ===========");
         // out.println(object_mapper.toJson(speakers_map));
-        /* DEBUG
-         try {
-         object_mapper.writeValue(new FileOutputStream(result_file_path), speakers_map);
-         } catch (FileNotFoundException ex) {
-         Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-         }
-         */
-
+        try {
+            //             object_mapper.writeValue(new FileOutputStream(result_file_path), l);
+            object_mapper.writeValue(new FileOutputStream(result_file_path), speakers_map);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
+    // NOTE: There is probably a Generics refactoring possible here ..
     public static void writeMergedSpeechTranscripts(
             List<Map<String, String>> speech_transcript_logs,
             String result_file_path) {
@@ -121,22 +128,19 @@ public class Utils {
         // http://tutorials.jenkov.com/java-json/boon-objectmapper.html#date-formats-in-JSON
         // JSON lines?
         // DEBUG: Raw structure out; before being JSON-ize
-        out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
-        Boon.puts(speech_transcript_logs);
+        // out.println("writeMergedSpeechTranscripts ======0000000======000000=====000000=======");
+        // Boon.puts(speech_transcript_logs);
 
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
         // DEBUG: Output as JSON
         // out.println("Boon toJSON ************>>>>>>>>");
         // out.println(object_mapper.toJson(speech_transcript_logs));
-        /* DEBUG
-         try {
-         object_mapper.writeValue(new FileOutputStream(result_file_path), speech_transcript_logs);
-         } catch (FileNotFoundException ex) {
-         Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-         }
-         */
-
+        try {
+            object_mapper.writeValue(new FileOutputStream(result_file_path), speech_transcript_logs);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static String prepareContentForSpeakerIdentification(String raw_content) {
@@ -223,16 +227,15 @@ public class Utils {
     // Match timestamp ..
     // clean up of title
     private static String cleanTopicTitle(String raw_topic_title) {
-        // remove chars not allowed
+        // remove chars not allowed; leave as a space
         Matcher matched_illegal_topic = pattern_illegal_topic.matcher(raw_topic_title);
         // apply a trim
-        // remove extra spaec ebecome one; merge with below ..
-        // replace all space with underscore so can be used as filename
         Matcher matched_extra_space = pattern_more_than_one_space.matcher(
-                matched_illegal_topic.replaceAll("").trim()
+                matched_illegal_topic.replaceAll(" ").trim()
         );
-        // For topic leave space with _ for use in filename ..
-        return matched_extra_space.replaceAll("_");
+        // For topic leave multiple spaces as a single space to be consistent with 
+        //  Parliament Q&A Blaster .. POW!
+        return matched_extra_space.replaceAll(" ");
 
     }
 

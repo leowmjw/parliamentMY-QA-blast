@@ -5,6 +5,7 @@
 package org.sinarproject.hansardparser;
 
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
+import itextblast.ITextBlast;
 import java.io.IOException;
 import static java.lang.System.out;
 import java.util.ArrayList;
@@ -22,10 +23,10 @@ import java.util.regex.Pattern;
 public class HansardSpeakers {
 
     private static String last_identified_speaker;
-    public static final String RESULT_SPEAKERS = "./results/%s/h-speakers-%s.pdf";
-    public static final String RESULT_SPEAKERS_UNSURE = "./results/%s/h-speakers-%s-unsure.pdf";
-    public static final String RESULT_TRANSCRIPT = "./results/%s/h-transcript-%s.pdf";
-    public static final String RESULT_TRANSCRIPT_UNSURE = "./results/%s/h-transcript-%s-unsure.pdf";
+    public static final String RESULT_SPEAKERS = "./results/%s/speakers-%s.json";
+    public static final String RESULT_SPEAKERS_UNSURE = "./results/%s/speakers-%s-unsure.json";
+    public static final String RESULT_TRANSCRIPT = "./results/%s/transcript-%s.json";
+    public static final String RESULT_TRANSCRIPT_UNSURE = "./results/%s/transcript-%s-unsure.json";
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
         Map<String, String> hansard_complete_speakers;
@@ -46,7 +47,11 @@ public class HansardSpeakers {
             // Start iterating through all content ..
             int start_page = current_page + 1;
             int end_page = myHalamanStartEnd.get(current_page) + 1;
-            out.println("For current block with title: " + topicbyPageNumber + " start page is " + start_page + " and end page is " + end_page);
+            out.println(
+                    "For current block with title: " + topicbyPageNumber
+                    + " start page is " + start_page + " and end page is "
+                    + end_page
+            );
             for (int i = start_page; i <= end_page; i++) {
                 // PdfDictionary pageDict = reader.getPageN(i);
                 // use location based strategy
@@ -59,11 +64,21 @@ public class HansardSpeakers {
                 // out.println(content);
                 // Identify people ..
                 hansard_complete_speakers.putAll(observeSpeakers(content));
-                Utils.writeMergedSpeakers(hansard_complete_speakers, "");
+                Utils.writeMergedSpeakers(hansard_complete_speakers,
+                        String.format(ITextBlast.working_dir + RESULT_SPEAKERS,
+                                HansardParser.hansard_filename,
+                                topicbyPageNumber
+                        )
+                );
                 // Identify speech block and order them out ..
                 //  put under the growing array for this topic
                 hansard_complete_logs.addAll(preparePage(content));
-                Utils.writeMergedSpeechTranscripts(hansard_complete_logs, "");
+                Utils.writeMergedSpeechTranscripts(hansard_complete_logs,
+                        String.format(ITextBlast.working_dir + RESULT_TRANSCRIPT,
+                                HansardParser.hansard_filename,
+                                topicbyPageNumber
+                        )
+                );
                 // extract and write out into JSON log as per Topic
                 // ... and what they say??
                 // How to regexp detect paragraph ..
@@ -82,11 +97,21 @@ public class HansardSpeakers {
                 // out.println(content);
                 // Identify people ..
                 hansard_unsure_speakers.putAll(observeSpeakers(content));
-                Utils.writeMergedSpeakers(hansard_unsure_speakers, "");
+                Utils.writeMergedSpeakers(hansard_unsure_speakers,
+                        String.format(ITextBlast.working_dir + RESULT_SPEAKERS_UNSURE,
+                                HansardParser.hansard_filename,
+                                topicbyPageNumber
+                        )
+                );
                 // Identify speech block and order them out ..
                 //  put under the growing array for this topic
                 hansard_unsure_logs.addAll(preparePage(content));
-                Utils.writeMergedSpeechTranscripts(hansard_unsure_logs, "");
+                Utils.writeMergedSpeechTranscripts(hansard_unsure_logs,
+                        String.format(ITextBlast.working_dir + RESULT_TRANSCRIPT_UNSURE,
+                                HansardParser.hansard_filename,
+                                topicbyPageNumber
+                        )
+                );
                 // extract and write out into JSON log as per Topic
                 // The maybes .. attach to the MyStars as game interface or PyBossa: Partial; yes? no? yes --> clean and identify
                 // HansardComplete['Topic Title']['Speakers_Maybe'] --> Attach Speakers in possible; to be cleaned manually
@@ -101,7 +126,7 @@ public class HansardSpeakers {
             // What to do with the HaansardComplete Map??
             // DUMP it out to file per topic!!
             // DEBUG: For demo; break out after first cycle as per below:
-            break;
+            // break;
 
         }
 
