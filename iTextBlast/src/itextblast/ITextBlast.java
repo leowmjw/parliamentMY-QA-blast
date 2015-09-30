@@ -13,15 +13,14 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.parser.LocationTextExtractionStrategy;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
-import com.itextpdf.text.pdf.parser.SimpleTextExtractionStrategy;
 import java.io.FileNotFoundException;
 import static java.lang.System.out;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.sinarproject.hansardparser.HansardParser;
 
 /**
  *
@@ -34,9 +33,11 @@ public class ITextBlast {
      */
     public static final String RESULT = "./results/%s/soalan-%s.pdf";
     public static final String SOURCE = "./source/%s.pdf";
-    private static String working_dir = "";
+    public static String working_dir = "";
     private static PdfReader my_reader;
     private static String qa_filename;
+    private static String myaction;
+    private static String mymeta;
 
     /**
      * Main method.
@@ -48,6 +49,17 @@ public class ITextBlast {
             if (args.length > 0) {
                 ITextBlast.working_dir = args[0];
                 ITextBlast.qa_filename = args[1];
+                if (args.length > 2) {
+                    ITextBlast.myaction = args[2];
+                } else {
+                    ITextBlast.myaction = "default";
+                }
+                if (args.length > 3) {
+                    ITextBlast.mymeta = args[3];
+                } else {
+                    // Set meta to "all" by default
+                    ITextBlast.mymeta = "all";
+                }
             } else {
                 // Extract filemame from CLI
                 // otherwise use below as default ..
@@ -56,7 +68,20 @@ public class ITextBlast {
             out.println("PROCESSING " + ITextBlast.qa_filename + " in " + ITextBlast.working_dir);
             // TODO: as preparation; make sure the inout file actually exists first!!
             // TODO: as preparation; create the resulting output folder?? if does not exist already
-            ITextBlast.processQAFile(ITextBlast.qa_filename);
+            // TODO: Should ne more flexible than requiring the exact correct order; 
+            //  but leave that as an exercise for the future
+            if ("default".equals(ITextBlast.myaction)) {
+                out.println("Default behavor ..");
+                // Default behavior ..
+                ITextBlast.processQAFile(ITextBlast.qa_filename);
+            } else if ("--parser=hansard".equals(ITextBlast.myaction)) {
+                // Pass in the filename of the PDF beig processed ..
+                // TODO: should refactor and rename variable
+                HansardParser.processHansardFile(ITextBlast.qa_filename, ITextBlast.mymeta);
+            } else {
+                // Don;t know what to do; note it and go away .. possibly throw error?
+                out.println("I don't know what to do.  Arg is " + ITextBlast.myaction);
+            }
         } catch (IOException | DocumentException ex) {
             Logger.getLogger(ITextBlast.class.getName()).log(Level.SEVERE, null, ex);
         }
