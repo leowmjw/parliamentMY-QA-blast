@@ -27,6 +27,11 @@ Usage:
 - For debugging; logs are stored inside the "logs" folder
 - At the top level of the repo; execute the script ..
 
+Demo Usage + Output:
+
+[![asciicast2](https://asciinema.org/a/ejts2pcz1h7gq9g0008hv1p8q.png)](https://asciinema.org/a/ejts2pcz1h7gq9g0008hv1p8q)
+
+Annotated Usage + Output:
 ```
 
   # See the source (by Parliament session day) ..
