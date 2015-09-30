@@ -1,8 +1,20 @@
+Malaysian Parliament Blaster!!
+==================================
+Tools to blast up (POW!!) Malaysian Parliamentary Documents in order to
+facilitate transparency and accountability in government functioning.
+
+**NEW:** Hansard Parser engine available.  Learn more at:
+./iTextBlast/src/org/sinarproject/hansardparser/README.md
+
+Current Available Parser Engines:
+- Parliamentary Written Questions & Answers (QA)
+- Parliamentary Hansard
+
 Malaysian Parliament QA Blaster!!
 ==================================
 
-Blast up (POW!!) Malaysian Parliamentary Written Questions &amp; Answers 
-not answered in Parliament; for further processing, tagging and loading 
+Blast up (POW!!) Malaysian Parliamentary Written Questions &amp; Answers
+not answered in Parliament; for further processing, tagging and loading
 into SinarProject's Parliamentary CMS.
 
 Each Question + Answer set will be in a single PDF.
@@ -14,6 +26,7 @@ Usage:
   to source filename containing the "blasted" PDFs based on Question No.
 - For debugging; logs are stored inside the "logs" folder
 - At the top level of the repo; execute the script ..
+
 ```
 
   # See the source (by Parliament session day) ..
@@ -25,7 +38,7 @@ Usage:
 20150521 Parliamentary Reply.pdf	20150608 Parliamentary Reply.pdf	20150616 Parliamentary Reply.pdf
 
   # Run the script ..
-  leow$ ./bin/parliamentmy-split 
+  leow$ ./bin/parliamentmy-split
 
   # See the results structure (by Parliament session day) ..
   leow$ ls ./results/
