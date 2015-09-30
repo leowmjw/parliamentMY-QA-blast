@@ -1,3 +1,15 @@
+Malaysian Parliament Blaster!!
+==================================
+Tools to blast up (POW!!) Malaysian Parliamentary Documents in order to
+facilitate transparency and accountability in government functioning.
+
+**NEW:** Hansard Parser engine available.  Learn more at:
+./iTextBlast/src/org/sinarproject/hansardparser/README.md
+
+Current Available Parser Engines:
+- Parliamentary Written Questions & Answers (QA)
+- Parliamentary Hansard
+
 Malaysian Parliament QA Blaster!!
 ==================================
 
@@ -50,8 +62,6 @@ soalan-18.pdf			soalan-30.pdf			soalan-45.pdf			soalan-60.pdf			soalan-77.pdf
 soalan-19.pdf			soalan-32.pdf			soalan-47.pdf			soalan-61.pdf
 
 ```
-
-Read more about the new Hansard Parser (and see detailed examples as well as intepretation of result) --> iTextBlast/src/org/sinarproject/hansardparser/README.md
 
 Development Environment:
 - Developed with Netbeans; so there is example Netbeans Project incorporated

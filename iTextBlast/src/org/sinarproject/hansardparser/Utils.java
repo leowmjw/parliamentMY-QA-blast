@@ -98,14 +98,27 @@ public class Utils {
         return false;
     }
 
+    public static boolean createParentFoldersIfMissing(String full_folder_path) {
+        File target_folder;
+        target_folder = new File(full_folder_path);
+        if (!target_folder.exists()) {
+            // If created; alert that it is OK to proceed; oterwise indicate false
+            //  means don;t proceed
+            return target_folder.mkdirs();
+        } else {
+            // Folder exists; go ahead ...
+            return true;
+        }
+    }
+
     public static void writeMergedSpeakers(Map<String, String> speakers_map,
             String result_file_path) {
 
         /*
-        List<Map<String, String>> l;
-        l = new ArrayList();
-        l.add(speakers_map);
-        */
+         List<Map<String, String>> l;
+         l = new ArrayList();
+         l.add(speakers_map);
+         */
         // Add to list to ease making JSONlines ..
         ObjectMapper object_mapper;
         object_mapper = JsonFactory.create();
@@ -191,7 +204,7 @@ public class Utils {
         Matcher match_imokman_timestamp = pattern_imokman_timestamp.matcher(raw_content);
         if (match_imokman_timestamp.find()) {
             // return match_imokman_timestamp.replaceAll("PARLIAMENT @[Clock]@" + match_imokman_timestamp.group(1));
-            return match_imokman_timestamp.replaceAll("");
+            return match_imokman_timestamp.replaceAll(" ");
         }
         return raw_content;
     }
@@ -217,7 +230,7 @@ public class Utils {
         // Remove full the pattern: /^DR\.\d+\.\d+\.\d+.*\d+/g 
         // Example: DR.18.6.2015 7 
         if (matched_document_page_header.find()) {
-            return matched_document_page_header.replaceAll("");
+            return matched_document_page_header.replaceAll(" ");
         }
         return raw_content;
     }

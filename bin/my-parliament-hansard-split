@@ -30,7 +30,8 @@ do
         current_filename=${current_file%.*}
         # echo ${current_filename##*/}
         # create the output folder in results ...
-        mkdir -p ${my_cwd}/results/${current_filename}
+        # Below not needed anymore as it is handled in the application code!! Yay!! :)
+        # mkdir -p ${my_cwd}/results/${current_filename}
 	# Execute the code ..
         # Use "$@" to pass all remaining params '"' important; Reference: <<put URL here>>
         # NOTE: When using exec; cannot use "\" to have separate multi-line; looks like 

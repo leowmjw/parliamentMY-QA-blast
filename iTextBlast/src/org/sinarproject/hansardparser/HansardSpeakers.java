@@ -23,22 +23,23 @@ import java.util.regex.Pattern;
 public class HansardSpeakers {
 
     private static String last_identified_speaker;
-    public static final String RESULT_SPEAKERS = "./results/%s/speakers-%s.json";
-    public static final String RESULT_SPEAKERS_UNSURE = "./results/%s/speakers-%s-unsure.json";
-    public static final String RESULT_TRANSCRIPT = "./results/%s/transcript-%s.json";
-    public static final String RESULT_TRANSCRIPT_UNSURE = "./results/%s/transcript-%s-unsure.json";
+    public static final String RESULT_SPEAKERS = HansardParser.RESULT_FOLDER + "speakers.json";
+    public static final String RESULT_SPEAKERS_UNSURE = HansardParser.RESULT_FOLDER + "speakers-unsure.json";
+    public static final String RESULT_TRANSCRIPT = HansardParser.RESULT_FOLDER + "transcript.json";
+    public static final String RESULT_TRANSCRIPT_UNSURE = HansardParser.RESULT_FOLDER + "transcript-unsure.json";
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
-        Map<String, String> hansard_complete_speakers;
-        hansard_complete_speakers = new TreeMap<>();
-        Map<String, String> hansard_unsure_speakers;
-        hansard_unsure_speakers = new TreeMap<>();
-        List<Map<String, String>> hansard_complete_logs;
-        hansard_complete_logs = new ArrayList<>();
-        List<Map<String, String>> hansard_unsure_logs;
-        hansard_unsure_logs = new ArrayList<>();
-
+        // Itertae though each topic start/end page combination ..
         for (Integer current_page : myHalamanStartEnd.keySet()) {
+            // Need to reinitialize for every new topic; otherwise weirdness ensues :P
+            Map<String, String> hansard_complete_speakers;
+            hansard_complete_speakers = new TreeMap<>();
+            Map<String, String> hansard_unsure_speakers;
+            hansard_unsure_speakers = new TreeMap<>();
+            List<Map<String, String>> hansard_complete_logs;
+            hansard_complete_logs = new ArrayList<>();
+            List<Map<String, String>> hansard_unsure_logs;
+            hansard_unsure_logs = new ArrayList<>();
             // Get the cleaned up topicbypagenumber .. which is the KEY to the Map 
             String topicbyPageNumber;
             topicbyPageNumber = Utils.getTopicbyPageNumber(current_page, myHalamanHash);
@@ -53,37 +54,44 @@ public class HansardSpeakers {
                     + end_page
             );
             for (int i = start_page; i <= end_page; i++) {
-                // PdfDictionary pageDict = reader.getPageN(i);
-                // use location based strategy
                 out.println("Page " + i);
                 out.println("===========");
-                // Clean the content out of DR headers before next stage in the pipelines ..
-                String content = Utils.prepareContentForSpeakerIdentification(
-                        PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i)
-                );
-                // out.println(content);
-                // Identify people ..
-                hansard_complete_speakers.putAll(observeSpeakers(content));
-                Utils.writeMergedSpeakers(hansard_complete_speakers,
-                        String.format(ITextBlast.working_dir + RESULT_SPEAKERS,
+                // Ensure pre-reqs of parent folders before proceeding ..
+                if (Utils.createParentFoldersIfMissing(
+                        String.format(ITextBlast.working_dir + HansardParser.RESULT_FOLDER,
                                 HansardParser.hansard_filename,
                                 topicbyPageNumber
-                        )
-                );
-                // Identify speech block and order them out ..
-                //  put under the growing array for this topic
-                hansard_complete_logs.addAll(preparePage(content));
-                Utils.writeMergedSpeechTranscripts(hansard_complete_logs,
-                        String.format(ITextBlast.working_dir + RESULT_TRANSCRIPT,
-                                HansardParser.hansard_filename,
-                                topicbyPageNumber
-                        )
-                );
-                // extract and write out into JSON log as per Topic
-                // ... and what they say??
-                // How to regexp detect paragraph ..
-            }
-            // Like in HansardCopy.java
+                        ))) {
+                    // Clean the content out of DR headers before next stage in the pipelines ..
+                    String content = Utils.prepareContentForSpeakerIdentification(
+                            PdfTextExtractor.getTextFromPage(HansardParser.my_reader, i)
+                    );
+                    // out.println(content);
+                    // Identify people ..
+                    hansard_complete_speakers.putAll(observeSpeakers(content));
+                    Utils.writeMergedSpeakers(hansard_complete_speakers,
+                            String.format(ITextBlast.working_dir + RESULT_SPEAKERS,
+                                    HansardParser.hansard_filename,
+                                    topicbyPageNumber
+                            )
+                    );
+                    // Identify speech block and order them out ..
+                    //  put under the growing array for this topic
+                    hansard_complete_logs.addAll(preparePage(content));
+                    Utils.writeMergedSpeechTranscripts(hansard_complete_logs,
+                            String.format(ITextBlast.working_dir + RESULT_TRANSCRIPT,
+                                    HansardParser.hansard_filename,
+                                    topicbyPageNumber
+                            )
+                    );
+                    // extract and write out into JSON log as per Topic
+                    // ... and what they say??
+                    // How to regexp detect paragraph ..
+                }
+                // DEBUG: If need to test one topic only; uncomment below ..
+                // break;
+            } // End loop for all the pages in the topic
+            // Like in HansardCopy.java; grab an extra page if necessary
             if (!((end_page == 1)
                     || (end_page >= HansardParser.my_reader.getNumberOfPages()))) {
                 // Put the Maybe here ..
@@ -94,7 +102,7 @@ public class HansardSpeakers {
                                 HansardParser.my_reader, (end_page + 1)
                         )
                 );
-                // out.println(content);
+                    // out.println(content);
                 // Identify people ..
                 hansard_unsure_speakers.putAll(observeSpeakers(content));
                 Utils.writeMergedSpeakers(hansard_unsure_speakers,
@@ -103,7 +111,7 @@ public class HansardSpeakers {
                                 topicbyPageNumber
                         )
                 );
-                // Identify speech block and order them out ..
+                    // Identify speech block and order them out ..
                 //  put under the growing array for this topic
                 hansard_unsure_logs.addAll(preparePage(content));
                 Utils.writeMergedSpeechTranscripts(hansard_unsure_logs,
@@ -112,22 +120,7 @@ public class HansardSpeakers {
                                 topicbyPageNumber
                         )
                 );
-                // extract and write out into JSON log as per Topic
-                // The maybes .. attach to the MyStars as game interface or PyBossa: Partial; yes? no? yes --> clean and identify
-                // HansardComplete['Topic Title']['Speakers_Maybe'] --> Attach Speakers in possible; to be cleaned manually
-                // HansardComplete['Topic Title']['Log_Maybe'] --> Attach Log; can clean up similarly
-                // HansardComplete['Topic Title']['PDF_Maybe'] --> File name for the Maybes ..    
-                // Returns parsedPage => Map<String, List<String>>
-                // Sorted List? Scan? If no exist; only append?
-                // parsedPage['speakers'] Map<String, Map<String,String>>
-                // HashMap or TreeMap?
-                // Map<String, Map<String, String>> mymap = new TreeMap<>();
             }
-            // What to do with the HaansardComplete Map??
-            // DUMP it out to file per topic!!
-            // DEBUG: For demo; break out after first cycle as per below:
-            // break;
-
         }
 
         out.println("Final ERR Count: " + HansardParser.my_error_count);
@@ -268,7 +261,7 @@ public class HansardSpeakers {
                 final_speaker = Utils.cleanSpeakersName(found_speakers.group(1));
                 final_message = found_speakers.replaceAll("");
                 Map<String, String> m;
-                m = new TreeMap();
+                m = new TreeMap<>();
                 m.put(final_speaker, final_message);
                 speaker_transcript.add(m);
                 // Mark the last guy to move on to the next page ..
@@ -277,7 +270,7 @@ public class HansardSpeakers {
                 final_speaker = Utils.cleanSpeakersName(matched_alt_speakers.group(1));
                 final_message = matched_alt_speakers.replaceAll("");
                 Map<String, String> m;
-                m = new TreeMap();
+                m = new TreeMap<>();
                 m.put(final_speaker, final_message);
                 speaker_transcript.add(m);
                 // Mark the last guy to move on to the next page ..

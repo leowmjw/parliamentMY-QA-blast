@@ -36,6 +36,7 @@ public class HansardParser {
     // = "example/DR-PARLIMEN/2015/DR-18062015.PDF";  
     // = "example/DR-PARLIMEN/2015/DR-24062013.pdf";
     // PdfReader for multiple uses?
+    public static final String RESULT_FOLDER = "./results/%s/%s/";
     // The two items below should NOT be static; danger to race /override conditions likely .. :P
     static PdfReader my_reader;
     static String hansard_filename;
