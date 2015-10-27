@@ -29,6 +29,9 @@ public class HansardSpeakers {
     public static final String RESULT_TRANSCRIPT_UNSURE = HansardParser.RESULT_FOLDER + "transcript-unsure.json";
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
+        if (myHalamanStartEnd == null || myHalamanHash == null) {
+            throw new IOException("Missing Pre-req Maps!!");
+        }
         // Itertae though each topic start/end page combination ..
         for (Integer current_page : myHalamanStartEnd.keySet()) {
             // Need to reinitialize for every new topic; otherwise weirdness ensues :P
@@ -102,7 +105,7 @@ public class HansardSpeakers {
                                 HansardParser.my_reader, (end_page + 1)
                         )
                 );
-                    // out.println(content);
+                // out.println(content);
                 // Identify people ..
                 hansard_unsure_speakers.putAll(observeSpeakers(content));
                 Utils.writeMergedSpeakers(hansard_unsure_speakers,
@@ -111,7 +114,7 @@ public class HansardSpeakers {
                                 topicbyPageNumber
                         )
                 );
-                    // Identify speech block and order them out ..
+                // Identify speech block and order them out ..
                 //  put under the growing array for this topic
                 hansard_unsure_logs.addAll(preparePage(content));
                 Utils.writeMergedSpeechTranscripts(hansard_unsure_logs,
@@ -121,6 +124,8 @@ public class HansardSpeakers {
                         )
                 );
             }
+            // DEBUG: First topic only ..
+            break;
         }
 
         out.println("Final ERR Count: " + HansardParser.my_error_count);
@@ -139,6 +144,7 @@ public class HansardSpeakers {
         pattern_mark_speakers = Pattern.compile("(.+?\\:)");
         Matcher found_speakers = pattern_mark_speakers.matcher(content);
         // DEBUG:
+        // out.println(content);
         // out.println("SPEAKERS:");
         while (found_speakers.find()) {
             String normalized_speaker_name = Utils.cleanSpeakersName(found_speakers.group(1));
@@ -207,6 +213,8 @@ public class HansardSpeakers {
         else {
             // Skip for now
             out.println("Found no speaker; assign to previous identified speaker ==> " + HansardSpeakers.last_identified_speaker);
+            // DEBUG:
+            // out.print(content);
             speakers_transcript_map = new ArrayList<>();
             Map<String, String> m;
             m = new HashMap<>();
@@ -224,6 +232,13 @@ public class HansardSpeakers {
     // Returns: Map of SpeechBlock; hash [Normalized_Speaker][] --> 
     //
     private static List<Map<String, String>> prepareSpeechBlock(String final_marked_content) {
+        // DEBUG:
+        /*
+        out.println("==DEBUG==");
+        out.println("Last Identified Speaker: " + last_identified_speaker);
+        out.println(final_marked_content);
+        out.println("==END_DEBUG==");
+        */
 
         // replace all newline with space /\n+/g
         Pattern pattern_newlines;
