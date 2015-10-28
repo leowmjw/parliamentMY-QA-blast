@@ -360,6 +360,10 @@ public class HansardSpeakersNGTest {
             }
         }
         if (reflected_prepareSpeechBlock != null) {
+            // Setup the last speaker via Reflection; for all future test
+            Field f = HansardSpeakers.class.getDeclaredField("last_identified_speaker");
+            f.setAccessible(true);
+            f.set(null,null);
             // SCENARIO #x: Fix issue #3; speech block before first recognized speaker
             reflected_prepareSpeechBlock.invoke(null, "bob");
             out.println("====SCENARIO #0 ==================");
@@ -367,9 +371,7 @@ public class HansardSpeakersNGTest {
             List<Map<String, String>> first_page_map = (List<Map<String, String>>) reflected_prepareSpeechBlock.invoke(null, first_page_prepped);
             puts(first_page_map.get(0));
             assertEquals(first_page_map.get(0).containsKey("IMOKMAN"), false);
-            // Setup the last speaker via Reflection; for all future test
-            Field f = HansardSpeakers.class.getDeclaredField("last_identified_speaker");
-            f.setAccessible(true);
+            // Set it now to known value
             f.set(null, "IMOKMAN");
             out.println("====SCENARIO #1 ==================");
             // SCENARIO #1: Page of speech (prepped) where missing speaker at start
