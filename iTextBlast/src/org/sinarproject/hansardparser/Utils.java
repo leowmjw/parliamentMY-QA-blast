@@ -6,15 +6,12 @@ package org.sinarproject.hansardparser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import static java.lang.System.out;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.boon.Boon;
 import org.boon.json.JsonFactory;
 import org.boon.json.ObjectMapper;
 
