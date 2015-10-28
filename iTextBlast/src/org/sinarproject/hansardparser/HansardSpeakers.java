@@ -27,6 +27,9 @@ public class HansardSpeakers {
     public static final String RESULT_SPEAKERS_UNSURE = HansardParser.RESULT_FOLDER + "speakers-unsure.json";
     public static final String RESULT_TRANSCRIPT = HansardParser.RESULT_FOLDER + "transcript.json";
     public static final String RESULT_TRANSCRIPT_UNSURE = HansardParser.RESULT_FOLDER + "transcript-unsure.json";
+    // Regexp patterns below
+    private static final String dangling_speech_block = "\\s*?(.*?)>>";
+    private static final Pattern dangling_speech_block_pattern = Pattern.compile(dangling_speech_block);
 
     public static void identifySpeakersinTopic(Map<Integer, Integer> myHalamanStartEnd, Map<Integer, List<String>> myHalamanHash) throws IOException {
         if (myHalamanStartEnd == null || myHalamanHash == null) {
@@ -125,7 +128,7 @@ public class HansardSpeakers {
                 );
             }
             // DEBUG: First topic only ..
-            break;
+            // break;
         }
 
         out.println("Final ERR Count: " + HansardParser.my_error_count);
@@ -219,12 +222,29 @@ public class HansardSpeakers {
             Map<String, String> m;
             m = new HashMap<>();
             // Next time attch to the last known speaker ..
-            m.put(HansardSpeakers.last_identified_speaker, content.replaceAll("\\n+", " "));
+            m.put(HansardSpeakers.last_identified_speaker, content.replaceAll("\\n+", " ").replaceAll("[\\s]{1,}", " ").trim());
             // Put back all the needed dta ..
             speakers_transcript_map.add(m);
         }
         // Return the Map; even though it may be empty!!
         return speakers_transcript_map;
+    }
+
+    private static String addDanglingSpeechBlock(String final_marked_content) {
+        Matcher dangling_speech_block_pattern_matched = dangling_speech_block_pattern.matcher(final_marked_content);
+        if (last_identified_speaker != null) {
+            if (dangling_speech_block_pattern_matched.find()) {
+                String potential_speech_block = dangling_speech_block_pattern_matched.group(1).replaceAll("\\n+", " ").replaceAll("[\\s]{1,}", " ");
+                // DEBUG:
+                /*
+                out.println("SPEECH_BLOCK: ==>");
+                out.println(potential_speech_block.trim());
+                */
+                return potential_speech_block.trim();
+            }
+        }
+        // No identified speaker yet; nothign to do ..
+        return "";
     }
 
     // 
@@ -234,12 +254,12 @@ public class HansardSpeakers {
     private static List<Map<String, String>> prepareSpeechBlock(String final_marked_content) {
         // DEBUG:
         /*
-        out.println("==DEBUG==");
-        out.println("Last Identified Speaker: " + last_identified_speaker);
-        out.println(final_marked_content);
-        out.println("==END_DEBUG==");
+         out.println("==DEBUG==");
+         out.println("Last Identified Speaker: " + last_identified_speaker);
+         out.println(final_marked_content);
+         out.println("==END_DEBUG==");
         */
-
+         
         // replace all newline with space /\n+/g
         Pattern pattern_newlines;
         pattern_newlines = Pattern.compile("\\n+");
@@ -257,6 +277,14 @@ public class HansardSpeakers {
         // Structure Looks like below: 
         // List[] --> [speaker]=> [content_transcript]
 
+        // Add any dangling speakers
+        String dangling_message = addDanglingSpeechBlock(final_marked_content);
+        if (!"".equals(dangling_message)) {
+            Map<String, String> m;
+            m = new TreeMap<>();
+            m.put(last_identified_speaker, dangling_message);
+            speaker_transcript.add(m);
+        }
         while (matched_marked_speakers.find()) {
             String matched_speech_block = matched_marked_speakers.group(2);
             // Check both patterns to extract out speaker ..
@@ -274,7 +302,7 @@ public class HansardSpeakers {
             final_speaker = "";
             if (found_speakers.find()) {
                 final_speaker = Utils.cleanSpeakersName(found_speakers.group(1));
-                final_message = found_speakers.replaceAll("");
+                final_message = found_speakers.replaceAll("").replaceAll("[\\s]{1,}", " ").trim();
                 Map<String, String> m;
                 m = new TreeMap<>();
                 m.put(final_speaker, final_message);
@@ -283,7 +311,7 @@ public class HansardSpeakers {
                 HansardSpeakers.last_identified_speaker = final_speaker;
             } else if (matched_alt_speakers.find()) {
                 final_speaker = Utils.cleanSpeakersName(matched_alt_speakers.group(1));
-                final_message = matched_alt_speakers.replaceAll("");
+                final_message = matched_alt_speakers.replaceAll("").replaceAll("[\\s]{1,}", " ").trim();
                 Map<String, String> m;
                 m = new TreeMap<>();
                 m.put(final_speaker, final_message);
@@ -297,7 +325,7 @@ public class HansardSpeakers {
                 // Since there is NO Speaker; the message is actually the whole
                 //  matched marked block; otherwise, the observed state is missing
                 //  a single character :)
-                final_message = matched_marked_speakers.group(0).replaceAll("\\n+", " ");
+                final_message = matched_marked_speakers.group(0).replaceAll("\\n+", " ").replaceAll("[\\s]{1,}", " ").trim();
                 HansardParser.my_error_count++;
                 // DEBUG: Below for debugging purposes ..
                 /*

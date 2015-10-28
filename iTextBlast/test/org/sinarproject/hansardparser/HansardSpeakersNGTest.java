@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import org.boon.Boon;
+import static org.boon.Boon.puts;
 import static org.boon.Boon.toJson;
 import static org.testng.Assert.*;
 import org.testng.annotations.AfterClass;
@@ -68,7 +69,7 @@ public class HansardSpeakersNGTest {
             + "Pertua, untuk makluman Ahli Yang Berhormat, PR1MA tidak pernah memutuskan untuk \n"
             + "menaikkan lingkungan harga bagi rumah-rumahnya.  Rumah mampu milik yang disediakan \n"
             + "PR1MA, masih kekal dalam lingkungan harga yang telah ditetapkan iaitu di antara RM100,000 ";
-// In preparePage; when no Speakers; no transformation done ..
+    // In preparePage; when no Speakers; no transformation done ..
     private static final String no_speaker = "  \n"
             + " \n"
             + "dengan izin daripada Pelan Pembangunan Pendidikan (PPPM) sektor sekolah yang telah \n"
@@ -197,6 +198,53 @@ public class HansardSpeakersNGTest {
             + "membunuh lebih kurang 144 orang dalam bulan ini. Seramai 144 people have died and 15,000 \n"
             + "infection.  Ini merupakan satu isu nasional, kecemasan nasional.  So, jawapan yang diberikan oleh ";
 
+    private static final String first_page_prepped = "  \n"
+            + " \n"
+            + "MALAYSIA \n"
+            + "DEWAN RAKYAT  \n"
+            + "PARLIMEN KETIGA BELAS \n"
+            + "PENGGAL KETIGA  \n"
+            + "MESYUARAT KEDUA  \n"
+            + "Khamis, 18 Jun 2015 \n"
+            + "Mesyuarat dimulakan pada pukul 10.00 pagi \n"
+            + "DOA \n"
+            + "[Tuan Yang di-Pertua mempengerusikan Mesyuarat] \n"
+            + " \n"
+            + " \n"
+            + "USUL \n"
+            + " \n"
+            + "MENANGGUH BACAAN KALI KEDUA DAN KETIGA \n"
+            + "RANG UNDANG-UNDANG DI BAWAH P.M.62 \n"
+            + " \n"
+            + ">>IMOKMAN** Menteri di Jabatan Perdana Menteri [Dato' Seri Shahidan bin Kassim]:  Tuan Yang di-\n"
+            + ">>IMOKMAN**Pertua, saya mohon mencadangkan: \n"
+            + " “Bahawa menurut Peraturan Mesyuarat 62, DR 24/2015 Rang Undang-\n"
+            + "undang Profesion Kesihatan Bersekutu 2015,  DR 9/2015 Rang Undang-undang \n"
+            + "Kanun Tatacara Jenayah (Pindaan) 2015, DR 12/2015 Rang Undang-undang \n"
+            + "Keterangan 2015 dan DR 24/2014 Rang Undang-undang Dadah Berbahaya \n"
+            + "(Pindaan) (No.2) 2014 seperti yang tertera di nombor 8, 9, 10 dan 11 dalam Aturan \n"
+            + "Urusan Mesyuarat pada hari ini ditangguhkan Bacaan Kali Yang Kedua dan Ketiga \n"
+            + "dan dibawa ke Mesyuarat akan datang.” \n"
+            + " \n"
+            + " \n"
+            + "JAWAPAN-JAWAPAN LISAN BAGI PERTANYAAN-PERTANYAAN \n"
+            + " \n"
+            + " \n"
+            + ">>IMOKMAN** 1. Datuk Sapawi bin Haji Ahmad Wasali [Sipitang] minta Menteri Pendidikan menyatakan \n"
+            + "sejauh mana sambutan terhadap pelaksanaan Pelan Pendidikan Nasional dan apakah langkah-\n"
+            + "langkah diambil oleh pihak pengurusan institusi pengajian tinggi (IPT) untuk menjayakannya.  \n"
+            + " \n"
+            + ">>IMOKMAN** Menteri Pendidikan II [Dato’ Seri Haji Idris Jusoh]:  Tuan Yang di-Pertua,  saya \n"
+            + "mengucapkan selamat berpuasa kepada semua kaum Muslimin dan Muslimat pada pagi ini.  \n"
+            + "Pertamanya saya bagi pihak Kementerian Pendidikan Malaysia, ingin mengucapkan terima kasih \n"
+            + "di atas keprihatinan Ahli-ahli Yang Berhormat yang telah membangkitkan perkara-perkara yang \n"
+            + "berkaitan dengan Pelan Pembangunan Pendidikan Negara.  Terdapat dua pertanyaan hari ini yang \n"
+            + "berhubung kait dengan pelan tersebut iaitu Yang Berhormat dari Sipitang dan Yang Berhormat \n"
+            + "daripada Tenom.  Mohon dijawab bersekali, Tuan Yang di-Pertua. \n"
+            + ">>IMOKMAN** Tuan Yang di-Pertua:  Sila. \n"
+            + ">>IMOKMAN** Dato’ Seri Haji Idris Jusoh:  Penggubalan Pelan Pembangunan Pendidikan Malaysia \n"
+            + "2015/2025, Pendidikan Tinggi ataupun PPPMPT merupakan kesinambungan ataupun continuity, ";
+
     public HansardSpeakersNGTest() {
     }
 
@@ -298,7 +346,7 @@ public class HansardSpeakersNGTest {
 
     // Test of prepareSpeechBlock method, of class HansardSpeakers
     // For fix of issue #3
-    @Test(enabled = false)
+    @Test
     public void testPrepareSpeechBlock() throws Exception {
         Method reflected_prepareSpeechBlock = null;
         out.println("prepareSpeechBlock");
@@ -311,22 +359,40 @@ public class HansardSpeakersNGTest {
                 reflected_prepareSpeechBlock = one_method;
             }
         }
-        // Setup the last speaker via Reflection
-        Field f = HansardSpeakers.class.getDeclaredField("last_identified_speaker");
-        f.setAccessible(true);
-        f.set(null, "IMOKMAN");
         if (reflected_prepareSpeechBlock != null) {
             // SCENARIO #x: Fix issue #3; speech block before first recognized speaker
             reflected_prepareSpeechBlock.invoke(null, "bob");
-            // SCENARIO #1: Page of speech without any speakers
-            List<Map<String, String>> result_map = (List<Map<String, String>>) reflected_prepareSpeechBlock.invoke(null, no_speaker);
+            out.println("====SCENARIO #0 ==================");
+            // SCENARIO #0: Test the first page; so NO last_identified_speaker set yet ..
+            List<Map<String, String>> first_page_map = (List<Map<String, String>>) reflected_prepareSpeechBlock.invoke(null, first_page_prepped);
+            puts(first_page_map.get(0));
+            assertEquals(first_page_map.get(0).containsKey("IMOKMAN"), false);
+            // Setup the last speaker via Reflection; for all future test
+            Field f = HansardSpeakers.class.getDeclaredField("last_identified_speaker");
+            f.setAccessible(true);
+            f.set(null, "IMOKMAN");
+            out.println("====SCENARIO #1 ==================");
+            // SCENARIO #1: Page of speech (prepped) where missing speaker at start
+            List<Map<String, String>> result_map = (List<Map<String, String>>) reflected_prepareSpeechBlock.invoke(null, missing_speaker_at_start_prepped);
             out.println("=== POST PROCESS ==>");
-            // puts(result_map);
+            // First entry should have the previous speaker; in this case; the 
+            //  fictatious MP IMOKMAN
+            puts(result_map.get(0));
+            assertEquals(result_map.get(0).containsKey("IMOKMAN"), true);
             // out.println(Boon.toJson(result_map));
-            for (Map<String, String> single_map : result_map) {
-                out.println(toJson(single_map));
-            }
+            /*
+             for (Map<String, String> single_map : result_map) {
+             out.println(toJson(single_map));
+             if (single_map.containsKey("TUAN_SIM_CHEE_KEONG_BUKIT_MERTAJAM")) {
+             out.println("==> IMOKMAN!!!!! ==> FREEDOM!!");
+             }
+             }
+             */
+            out.println("====SCENARIO #2 ==================");
+            // SCENRIO #2: Page of speech (prepped) where sepaker starts the page
+            List<Map<String, String>> multi_speaker_map = (List<Map<String, String>>) reflected_prepareSpeechBlock.invoke(null, multiple_speakers_prepped);
+            puts(multi_speaker_map.get(0));
+            assertEquals(multi_speaker_map.get(0).containsKey("IMOKMAN"), false);
         }
-        fail("The test case is a prototype!!");
     }
 }
