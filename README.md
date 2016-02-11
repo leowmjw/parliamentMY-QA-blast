@@ -3,12 +3,14 @@ Malaysian Parliament Blaster!!
 Tools to blast up (POW!!) Malaysian Parliamentary Documents in order to
 facilitate transparency and accountability in government functioning.
 
-**NEW:** Hansard Parser engine available.  Learn more at:
-./iTextBlast/src/org/sinarproject/hansardparser/README.md
+**NEW:** EC Parser engine available.  Learn more at:
+./iTextBlast/src/org/sinarproject/ecparser/README.md
+
 
 Current Available Parser Engines:
 - Parliamentary Written Questions & Answers (QA)
-- Parliamentary Hansard
+- Parliamentary Hansard.  [Learn more](./iTextBlast/src/org/sinarproject/hansardparser/README.md)
+- Election Commission Proposals
 
 Malaysian Parliament QA Blaster!!
 ==================================

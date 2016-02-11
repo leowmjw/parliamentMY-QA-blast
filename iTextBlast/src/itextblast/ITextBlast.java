@@ -20,7 +20,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.sinarproject.ecparser.ECRedelineation;
 import org.sinarproject.hansardparser.HansardParser;
+
 
 /**
  *
@@ -74,10 +76,16 @@ public class ITextBlast {
                 out.println("Default behavor ..");
                 // Default behavior ..
                 ITextBlast.processQAFile(ITextBlast.qa_filename);
+            } else if ("--parser=written".equals(ITextBlast.myaction)) {
+                // TODO: For issue-#2; refactor out an engine for Written Questions
             } else if ("--parser=hansard".equals(ITextBlast.myaction)) {
                 // Pass in the filename of the PDF beig processed ..
                 // TODO: should refactor and rename variable
                 HansardParser.processHansardFile(ITextBlast.qa_filename, ITextBlast.mymeta);
+            } else if ("--parser=ec".equals(ITextBlast.myaction)) {
+                // Pass in the partial path to the PDF being processed
+                // Assumes root is ITextBlast.working_dir ..
+                ECRedelineation.processECFile(ITextBlast.qa_filename, ITextBlast.mymeta);
             } else {
                 // Don;t know what to do; note it and go away .. possibly throw error?
                 out.println("I don't know what to do.  Arg is " + ITextBlast.myaction);
