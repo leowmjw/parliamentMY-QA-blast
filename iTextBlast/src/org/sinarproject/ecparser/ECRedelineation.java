@@ -24,7 +24,7 @@ public class ECRedelineation {
 
     public static String SOURCE_2ND = "./example/Sarawak_2ndSchedule.pdf";
     public static String SOURCE = "./example/Sarawak_Proposal.pdf";
-    public static String RESULTS = "./results/Sarawak.csv";
+    public static String RESULTS = "./results/%s.csv";
     static PdfReader my_reader;
     static int currentScheduleBlock = 0;
     static String currentPARCode;
@@ -40,88 +40,30 @@ public class ECRedelineation {
     static int fixedDMs = 0;
     static Map<String, String> final_mapped_data;
     static Map<String, String> error_while_parsing;
-    private static String ec_filename;
+    static String ec_filename;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
         out.println("Sinar Project's EC Parser ..");
-        PdfReader reader = null;
+        PdfReader reader;
+        reader = null;
         try {
             reader = new PdfReader(SOURCE);
-            int n;
-            n = reader.getNumberOfPages();
-            int i;
-            // Maps init .. Key is <PAR_CODE>/<DUN_CODE>/<DM_CODE>
-            // <Key> -> Name:Population
-            // Errors -> Map<ErrKey, Original String>; ErrKey is Nxx
-            final_mapped_data = new TreeMap<>();
-            error_while_parsing = new TreeMap<>();
-            // Loop through each page ..
-            for (i = 1; i < n; i++) {
-                try {
-                    String content;
-                    content = PdfTextExtractor.getTextFromPage(reader, i,
-                            new LocationTextExtractionStrategy()
-                    );
-                    // content = PdfTextExtractor.getTextFromPage(reader, i);
-                    describePage(content, i);
-                } catch (IOException ex) {
-                    Logger.getLogger(ECRedelineation.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            // Dump out error hash .. if any
-            if (error_while_parsing.size() > 0) {
-                out.println("==============================");
-                out.println(" PARSING ERRORS --> "
-                        + error_while_parsing.size() + " errors!!!");
-                out.println("DUN: " + DUNerrors
-                        + " DM: " + DMerrors
-                        + " Fixed:" + fixedDMs);
-                out.println("==============================");
-                // TODO: Shift to file output
-                /*
-                 for (Map.Entry<String, String> single_report_entry : error_while_parsing.entrySet()) {
-                 out.println("CODE: " + single_report_entry.getKey());
-                 out.println("UNMATCHED: " + single_report_entry.getValue());
-                 }
-                 */
-            } else {
-                out.println("========================");
-                out.println("      ALL OK!!!         ");
-                out.println("========================");
-            }
-
-            out.println("========================");
-            out.println("  @@@@ Data!!! @@@@     ");
-            out.println("========================");
-            out.println("Final DM count: " + countedDM);
-            // Detect if there any population not being able to be detected; so action can be taken
-            for (Map.Entry<String, String> single_data_entry : final_mapped_data.entrySet()) {
-                // Output those that were not able to be auto-corrected ..
-                if (single_data_entry.getValue().endsWith(":0")) {
-                    out.print("KEY:" + single_data_entry.getKey());
-                    out.println(" ==> " + single_data_entry.getValue());
-                };
-            }
-            // write down Output
-            // No JSON output in this cut :( Leave it for interaction with golang
-            //  and shapefile mapping and manipulatons ..
-            // Utils.writeJSONMappedData();
-            // go direct to CSV ..
-            Utils.writeCSVFinalData();
-            out.println("xxxxxxxXXXXXXXXXXxxxxxxxxx");
         } catch (IOException ex) {
             Logger.getLogger(ECRedelineation.class.getName()).log(Level.SEVERE, null, ex);
         }
+        // Assign it for later reuse ..
+        ECRedelineation.my_reader = reader;
+        ECRedelineation.ec_filename = "Sarawak_Proposal";
+        processECStructure("json");
     }
 
     public static void processECFile(String ec_filename, String mymeta) {
-        if (mymeta == null) {
+        if ((mymeta == null) || ("all".equals(mymeta))) {
             out.println("Inside the function processECFile!!");
-            mymeta = "split"; // Avialble metas: "all", "split", "speakers"
+            mymeta = "csv"; // Available metas: "csv"; maybe next time JSOn??
         } else {
             out.println("Inside the function processECFile with meta of " + mymeta);
         }
@@ -141,6 +83,76 @@ public class ECRedelineation {
 
     private static void processECStructure(String mymeta) {
         // TODO: Restructure all the stuff from main into here ..
+        int n = my_reader.getNumberOfPages();
+        int i;
+        // Maps init .. Key is <PAR_CODE>/<DUN_CODE>/<DM_CODE>
+        // <Key> -> Name:Population
+        // Errors -> Map<ErrKey, Original String>; ErrKey is Nxx
+        final_mapped_data = new TreeMap<>();
+        error_while_parsing = new TreeMap<>();
+        // Loop through each page ..
+        for (i = 1; i < n; i++) {
+            try {
+                String content;
+                content = PdfTextExtractor.getTextFromPage(my_reader, i,
+                        new LocationTextExtractionStrategy()
+                );
+                // content = PdfTextExtractor.getTextFromPage(reader, i);
+                describePage(content, i);
+            } catch (IOException ex) {
+                Logger.getLogger(ECRedelineation.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        // Dump out error hash .. if any
+        if (error_while_parsing.size() > 0) {
+            out.println("==============================");
+            out.println(" PARSING ERRORS --> "
+                    + error_while_parsing.size() + " errors!!!");
+            out.println("DUN: " + DUNerrors
+                    + " DM: " + DMerrors
+                    + " Fixed:" + fixedDMs);
+            out.println("==============================");
+            // TODO: Shift to file output
+                /*
+             for (Map.Entry<String, String> single_report_entry : error_while_parsing.entrySet()) {
+             out.println("CODE: " + single_report_entry.getKey());
+             out.println("UNMATCHED: " + single_report_entry.getValue());
+             }
+             */
+        } else {
+            out.println("========================");
+            out.println("      ALL OK!!!         ");
+            out.println("========================");
+        }
+
+        out.println("========================");
+        out.println("  @@@@ Data!!! @@@@     ");
+        out.println("========================");
+        out.println("Final DM count: " + countedDM);
+        // Detect if there any population not being able to be detected; so action can be taken
+        for (Map.Entry<String, String> single_data_entry : final_mapped_data.entrySet()) {
+            // Output those that were not able to be auto-corrected ..
+            if (single_data_entry.getValue().endsWith(":0")) {
+                out.print("KEY:" + single_data_entry.getKey());
+                out.println(" ==> " + single_data_entry.getValue());
+            };
+        }
+        if (null != mymeta) // write down Output
+        // No JSON output in this cut :( Leave it for interaction with golang
+        //  and shapefile mapping and manipulatons ..
+        {
+            switch (mymeta) {
+                case "json":
+                    Utils.writeJSONMappedData();
+                    break;
+                case "csv":
+                    // go direct to CSV ..
+                    Utils.writeCSVFinalData();
+                    break;
+            }
+        }
+
+        out.println("xxxxxxxXXXXXXXXXXxxxxxxxxx");
     }
 
     private static void describePage(String raw_extracted_content, int current_page) {

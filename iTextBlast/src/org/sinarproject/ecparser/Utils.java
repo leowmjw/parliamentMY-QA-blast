@@ -5,6 +5,7 @@
  */
 package org.sinarproject.ecparser;
 
+import itextblast.ITextBlast;
 import java.io.FileWriter;
 import java.io.IOException;
 import static java.lang.System.out;
@@ -341,8 +342,8 @@ public class Utils {
         FileWriter fileWriter;
         fileWriter = null;
         try {
-            // Open file
-            fileWriter = new FileWriter(ECRedelineation.RESULTS);
+            // Open file with same name as the source folder ..
+            fileWriter = new FileWriter(String.format(ITextBlast.working_dir + ECRedelineation.RESULTS, ECRedelineation.ec_filename));
             // Write header
             // FULL_CODE, PAR_CODE, PAR_NAME, DUN_CODE, DUN_NAME, DM_CODE, DM_NAME, POPULATION
             out.println("HEAD:FULL_CODE,PAR_CODE,PAR_NAME,DUN_CODE,DUN_NAME,DM_CODE,DM_NAME,POPULATION");
@@ -352,20 +353,16 @@ public class Utils {
             String single_row_data = "";
             for (Map.Entry<String, String> single_data_entry : ECRedelineation.final_mapped_data.entrySet()) {
                 single_row_data = single_data_entry.getKey() + "," + single_data_entry.getValue();
-                out.println("ROW:" + single_row_data);
+                // out.println("ROW:" + single_row_data);
                 fileWriter.append(single_row_data);
                 fileWriter.append("\n");
             }
+            // Flush all data out ..
+            fileWriter.flush();
+            // Close file
+            fileWriter.close();
         } catch (IOException ex) {
             Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                // Close file
-                fileWriter.flush();
-                fileWriter.close();
-            } catch (IOException ex) {
-                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
     }
 
