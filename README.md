@@ -4,7 +4,7 @@ Tools to blast up (POW!!) Malaysian Parliamentary Documents in order to
 facilitate transparency and accountability in government functioning.
 
 **NEW:** EC Parser engine available.  Learn more at:
-./iTextBlast/src/org/sinarproject/ecparser/README.md
+[EC Parser](./iTextBlast/src/org/sinarproject/ecparser/README.md)
 
 
 Current Available Parser Engines:
