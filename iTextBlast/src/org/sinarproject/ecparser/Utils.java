@@ -130,7 +130,7 @@ public class Utils {
                     DUN_regexp_loose_pattern_matched.group(1)
             );
             // Since we assume no match of DM code; drop to default
-            ECRedelineation.currentDMCode = "01";
+            ECRedelineation.currentDMCode = "001";
             // TODO: Alternative; detect if possible A below
             // <dm_code>. <name> ==> possible A??
             // <name> <population> ==> default assumption
@@ -321,7 +321,7 @@ public class Utils {
         }
         // Left over ..
         out.println("ERR_PROB:");
-        ECRedelineation.currentDMCode = "01";
+        ECRedelineation.currentDMCode = "001";
         // Detect and attach to last found DUN ..
         return "UNKNOWN,0";
     }
@@ -383,7 +383,7 @@ public class Utils {
     private static String normalizeCode(String raw_code_number) {
         // Fixed to double digit .. 
         // http://stackoverflow.com/questions/4469717/left-padding-a-string-with-zeros
-        return String.format("%02d", Integer.parseInt(raw_code_number));
+        return String.format("%03d", Integer.parseInt(raw_code_number));
     }
 
     private static String normalizeName(String raw_name) {
