@@ -15,6 +15,8 @@ import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import java.io.FileNotFoundException;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static java.lang.System.out;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -75,9 +77,10 @@ public class ITextBlast {
             if ("default".equals(ITextBlast.myaction)) {
                 out.println("Default behavor ..");
                 // Default behavior ..
-                ITextBlast.processQAFile(ITextBlast.qa_filename);
+                ITextBlast.processQAFile(ITextBlast.qa_filename, TRUE);
             } else if ("--parser=written".equals(ITextBlast.myaction)) {
-                // TODO: For issue-#2; refactor out an engine for Written Questions
+                // For Written Questions; indicate there is NO Front Page
+                ITextBlast.processQAFile(ITextBlast.qa_filename, FALSE);
             } else if ("--parser=hansard".equals(ITextBlast.myaction)) {
                 // Pass in the filename of the PDF beig processed ..
                 // TODO: should refactor and rename variable
@@ -95,7 +98,7 @@ public class ITextBlast {
         }
     }
 
-    private static void processQAFile(String qa_filename) throws IOException, DocumentException {
+    private static void processQAFile(String qa_filename, Boolean has_frontpage) throws IOException, DocumentException {
 
         // use one of the previous examples to create a PDF
         // new MovieTemplates().createPdf(MovieTemplates.RESULT);
@@ -141,6 +144,13 @@ public class ITextBlast {
         int start_page = 1;
         int end_page = 1;
         String question_number = "0-intro";
+        
+        // This is for SOALAN LISAN; which has no Front Page
+        // the Start Question Number should then be set to SMART Start Number
+        if (! has_frontpage) {
+            question_number = smart_start_question_number;
+        }
+        
         for (int i = 1; i < n; i++) {
             // init found_question_number
             String found_question_number = null;
