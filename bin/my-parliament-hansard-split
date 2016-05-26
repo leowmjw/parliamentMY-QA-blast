@@ -24,7 +24,7 @@ IFS=$'\n'
 for current_file in `ls ${my_cwd}/source/`
 do
     # should chck mime type of pdf
-    is_pdf=`file -I ${my_cwd}/source/${current_file} | grep pdf`
+    is_pdf=`file --mime-type ${my_cwd}/source/${current_file} | grep pdf`
     if [ "${is_pdf}" ]; then
     	echo "PROCESSING PDF: ${current_file}"
         current_filename=${current_file%.*}
