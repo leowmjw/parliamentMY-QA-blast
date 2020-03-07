@@ -1,3 +1,5 @@
+**Replacement** --> https://github.com/Sinar/go-pardocs
+
 Malaysian Parliament Blaster!!
 ==================================
 Tools to blast up (POW!!) Malaysian Parliamentary Documents in order to
